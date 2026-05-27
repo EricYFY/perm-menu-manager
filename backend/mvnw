@@ -1,0 +1,20 @@
+#!/bin/sh
+# ----------------------------------------------------------------------------
+# 本地免安装 Maven 的轻量包装器 (Maven Wrapper)
+# ----------------------------------------------------------------------------
+
+# 确定当前脚本的物理路径，处理软链接
+PRG="$0"
+while [ -h "$PRG" ] ; do
+  ls=`ls -ld "$PRG"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '/.*' > /dev/null; then
+    PRG="$link"
+  else
+    PRG=`dirname "$PRG"`/"$link"
+  fi
+done
+
+DIR=`dirname "$PRG"`
+# 转发所有参数给本地的 maven 二进制文件
+exec "$DIR/maven/bin/mvn" "$@"

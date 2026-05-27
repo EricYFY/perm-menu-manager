@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.permmenu.mapper.PermMenuMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="permMenuResultMap" type="com.example.permmenu.entity.PermMenu">
+        <result column="TENANT_ID" property="tenantId"/>
+        <result column="STAT" property="stat"/>
+        <result column="MENU_SCOPE" property="menuScope"/>
+        <result column="MENU_CODE" property="menuCode"/>
+        <result column="MENU_NAME" property="menuName"/>
+        <result column="MENU_LEVEL" property="menuLevel"/>
+        <result column="MENU_TYPE" property="menuType"/>
+        <result column="UPP_MENU_CODE" property="uppMenuCode"/>
+        <result column="MENU_CHECKED" property="menuChecked"/>
+        <result column="MENU_KIND" property="menuKind"/>
+        <result column="MENU_VERIFY" property="menuVerify"/>
+        <result column="MENU_DISPLAY" property="menuDisplay"/>
+        <result column="TR_CODE" property="trCode"/>
+        <result column="SECURITY_TR_CODE" property="securityTrCode"/>
+        <result column="CTRL_ATTI" property="ctrlAtti"/>
+        <result column="BIZ_ATTI" property="bizAtti"/>
+        <result column="ACCT_AUTH_ATTI" property="acctAuthAtti"/>
+        <result column="ASAC_AUTH_ATTI" property="asacAuthAtti"/>
+        <result column="TIME_ATTI" property="timeAtti"/>
+        <result column="WORKFLOW_FLAG" property="workflowFlag"/>
+        <result column="WORKFLOW_BIZ_TYPE" property="workflowBizType"/>
+        <result column="IS_ADMIN" property="isAdmin"/>
+        <result column="IS_OPERATOR" property="isOperator"/>
+        <result column="IS_USER" property="isUser"/>
+        <result column="SORT_NO" property="sortNo"/>
+        <result column="SUBSYSTEM_CODE" property="subsystemCode"/>
+        <result column="FOLDER_CODE" property="folderCode"/>
+        <result column="BIZ_CATEGORY_NO" property="bizCategoryNo"/>
+        <result column="BIZ_CATEGORY_NAME" property="bizCategoryName"/>
+        <result column="MENU_ICON" property="menuIcon"/>
+        <result column="MENU_HERF_TYPE" property="menuHerfType"/>
+        <result column="MENU_HERF" property="menuHerf"/>
+        <result column="MENU_ATTRIBUTE" property="menuAttribute"/>
+        <result column="ICON_FLAG" property="iconFlag"/>
+        <result column="IS_KEEP_ALIVE" property="isKeepAlive"/>
+        <result column="JUMP_HERF" property="jumpHerf"/>
+        <result column="TB_VERSION" property="tbVersion"/>
+        <result column="DESCRIPTION" property="description"/>
+    </resultMap>
+
+    <!-- 所有列名 -->
+    <sql id="allColumns">
+        TENANT_ID, STAT, MENU_SCOPE, MENU_CODE, MENU_NAME, MENU_LEVEL, MENU_TYPE,
+        UPP_MENU_CODE, MENU_CHECKED, MENU_KIND, MENU_VERIFY, MENU_DISPLAY,
+        TR_CODE, SECURITY_TR_CODE, CTRL_ATTI, BIZ_ATTI, ACCT_AUTH_ATTI, ASAC_AUTH_ATTI,
+        TIME_ATTI, WORKFLOW_FLAG, WORKFLOW_BIZ_TYPE, IS_ADMIN, IS_OPERATOR, IS_USER,
+        SORT_NO, SUBSYSTEM_CODE, FOLDER_CODE, BIZ_CATEGORY_NO, BIZ_CATEGORY_NAME,
+        MENU_ICON, MENU_HERF_TYPE, MENU_HERF, MENU_ATTRIBUTE, ICON_FLAG, IS_KEEP_ALIVE,
+        JUMP_HERF, TB_VERSION, DESCRIPTION
+    </sql>
+
+    <!-- 查询指定渠道的所有菜单 -->
+    <select id="selectByScope" resultMap="permMenuResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM perm_menu
+        WHERE MENU_SCOPE = #{menuScope}
+          AND TENANT_ID = #{tenantId}
+        ORDER BY SORT_NO
+    </select>
+
+    <!-- 根据复合主键查询 -->
+    <select id="selectByKey" resultMap="permMenuResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM perm_menu
+        WHERE MENU_CODE = #{menuCode}
+          AND MENU_SCOPE = #{menuScope}
+          AND TENANT_ID = #{tenantId}
+    </select>
+
+    <!-- 批量更新子菜单的上级编码 -->
+    <update id="updateUppMenuCode">
+        UPDATE perm_menu
+        SET UPP_MENU_CODE = #{newCode}
+        WHERE UPP_MENU_CODE = #{oldCode}
+          AND MENU_SCOPE = #{menuScope}
+          AND TENANT_ID = #{tenantId}
+    </update>
+
+    <!-- 根据复合主键删除 -->
+    <delete id="deleteByKey">
+        DELETE FROM perm_menu
+        WHERE MENU_CODE = #{menuCode}
+          AND MENU_SCOPE = #{menuScope}
+          AND TENANT_ID = #{tenantId}
+    </delete>
+
+    <!-- 查询直接子菜单 -->
+    <select id="selectChildren" resultMap="permMenuResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM perm_menu
+        WHERE UPP_MENU_CODE = #{uppMenuCode}
+          AND MENU_SCOPE = #{menuScope}
+          AND TENANT_ID = #{tenantId}
+        ORDER BY SORT_NO
+    </select>
+
+    <!-- 递归查询所有后代菜单（使用递归 CTE） -->
+    <select id="selectAllDescendants" resultMap="permMenuResultMap">
+        WITH RECURSIVE descendants AS (
+            SELECT <include refid="allColumns"/>
+            FROM perm_menu
+            WHERE UPP_MENU_CODE = #{uppMenuCode}
+              AND MENU_SCOPE = #{menuScope}
+              AND TENANT_ID = #{tenantId}
+            UNION ALL
+            SELECT m.TENANT_ID, m.STAT, m.MENU_SCOPE, m.MENU_CODE, m.MENU_NAME,
+                   m.MENU_LEVEL, m.MENU_TYPE, m.UPP_MENU_CODE, m.MENU_CHECKED,
+                   m.MENU_KIND, m.MENU_VERIFY, m.MENU_DISPLAY, m.TR_CODE,
+                   m.SECURITY_TR_CODE, m.CTRL_ATTI, m.BIZ_ATTI, m.ACCT_AUTH_ATTI,
+                   m.ASAC_AUTH_ATTI, m.TIME_ATTI, m.WORKFLOW_FLAG, m.WORKFLOW_BIZ_TYPE,
+                   m.IS_ADMIN, m.IS_OPERATOR, m.IS_USER, m.SORT_NO, m.SUBSYSTEM_CODE,
+                   m.FOLDER_CODE, m.BIZ_CATEGORY_NO, m.BIZ_CATEGORY_NAME, m.MENU_ICON,
+                   m.MENU_HERF_TYPE, m.MENU_HERF, m.MENU_ATTRIBUTE, m.ICON_FLAG,
+                   m.IS_KEEP_ALIVE, m.JUMP_HERF, m.TB_VERSION, m.DESCRIPTION
+            FROM perm_menu m
+            INNER JOIN descendants d ON m.UPP_MENU_CODE = d.MENU_CODE
+                AND m.MENU_SCOPE = d.MENU_SCOPE
+                AND m.TENANT_ID = d.TENANT_ID
+        )
+        SELECT * FROM descendants
+    </select>
+
+    <!-- 插入菜单记录 -->
+    <insert id="insertMenu">
+        INSERT INTO perm_menu (
+            TENANT_ID, STAT, MENU_SCOPE, MENU_CODE, MENU_NAME, MENU_LEVEL, MENU_TYPE,
+            UPP_MENU_CODE, MENU_CHECKED, MENU_KIND, MENU_VERIFY, MENU_DISPLAY,
+            TR_CODE, SECURITY_TR_CODE, CTRL_ATTI, BIZ_ATTI, ACCT_AUTH_ATTI, ASAC_AUTH_ATTI,
+            TIME_ATTI, WORKFLOW_FLAG, WORKFLOW_BIZ_TYPE, IS_ADMIN, IS_OPERATOR, IS_USER,
+            SORT_NO, SUBSYSTEM_CODE, FOLDER_CODE, BIZ_CATEGORY_NO, BIZ_CATEGORY_NAME,
+            MENU_ICON, MENU_HERF_TYPE, MENU_HERF, MENU_ATTRIBUTE, ICON_FLAG, IS_KEEP_ALIVE,
+            JUMP_HERF, TB_VERSION, DESCRIPTION
+        ) VALUES (
+            #{menu.tenantId}, #{menu.stat}, #{menu.menuScope}, #{menu.menuCode},
+            #{menu.menuName}, #{menu.menuLevel}, #{menu.menuType}, #{menu.uppMenuCode},
+            #{menu.menuChecked}, #{menu.menuKind}, #{menu.menuVerify}, #{menu.menuDisplay},
+            #{menu.trCode}, #{menu.securityTrCode}, #{menu.ctrlAtti}, #{menu.bizAtti},
+            #{menu.acctAuthAtti}, #{menu.asacAuthAtti}, #{menu.timeAtti}, #{menu.workflowFlag},
+            #{menu.workflowBizType}, #{menu.isAdmin}, #{menu.isOperator}, #{menu.isUser},
+            #{menu.sortNo}, #{menu.subsystemCode}, #{menu.folderCode}, #{menu.bizCategoryNo},
+            #{menu.bizCategoryName}, #{menu.menuIcon}, #{menu.menuHerfType}, #{menu.menuHerf},
+            #{menu.menuAttribute}, #{menu.iconFlag}, #{menu.isKeepAlive}, #{menu.jumpHerf},
+            #{menu.tbVersion}, #{menu.description}
+        )
+    </insert>
+
+    <!-- 根据复合主键更新（不更新主键字段） -->
+    <update id="updateByKey">
+        UPDATE perm_menu
+        SET MENU_NAME = #{menu.menuName},
+            MENU_LEVEL = #{menu.menuLevel},
+            MENU_TYPE = #{menu.menuType},
+            UPP_MENU_CODE = #{menu.uppMenuCode},
+            MENU_CHECKED = #{menu.menuChecked},
+            MENU_KIND = #{menu.menuKind},
+            MENU_VERIFY = #{menu.menuVerify},
+            MENU_DISPLAY = #{menu.menuDisplay},
+            TR_CODE = #{menu.trCode},
+            SECURITY_TR_CODE = #{menu.securityTrCode},
+            CTRL_ATTI = #{menu.ctrlAtti},
+            BIZ_ATTI = #{menu.bizAtti},
+            ACCT_AUTH_ATTI = #{menu.acctAuthAtti},
+            ASAC_AUTH_ATTI = #{menu.asacAuthAtti},
+            TIME_ATTI = #{menu.timeAtti},
+            WORKFLOW_FLAG = #{menu.workflowFlag},
+            WORKFLOW_BIZ_TYPE = #{menu.workflowBizType},
+            IS_ADMIN = #{menu.isAdmin},
+            IS_OPERATOR = #{menu.isOperator},
+            IS_USER = #{menu.isUser},
+            SORT_NO = #{menu.sortNo},
+            SUBSYSTEM_CODE = #{menu.subsystemCode},
+            FOLDER_CODE = #{menu.folderCode},
+            BIZ_CATEGORY_NO = #{menu.bizCategoryNo},
+            BIZ_CATEGORY_NAME = #{menu.bizCategoryName},
+            MENU_ICON = #{menu.menuIcon},
+            MENU_HERF_TYPE = #{menu.menuHerfType},
+            MENU_HERF = #{menu.menuHerf},
+            MENU_ATTRIBUTE = #{menu.menuAttribute},
+            ICON_FLAG = #{menu.iconFlag},
+            IS_KEEP_ALIVE = #{menu.isKeepAlive},
+            JUMP_HERF = #{menu.jumpHerf},
+            STAT = #{menu.stat},
+            TB_VERSION = #{menu.tbVersion},
+            DESCRIPTION = #{menu.description}
+        WHERE MENU_CODE = #{menu.menuCode}
+          AND MENU_SCOPE = #{menu.menuScope}
+          AND TENANT_ID = #{menu.tenantId}
+    </update>
+
+</mapper>

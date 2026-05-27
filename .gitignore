@@ -1,0 +1,33 @@
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDEs
+.idea/
+.vscode/
+*.project
+*.classpath
+*.factorypath
+*.settings/
+*.iml
+*.sublime-*
+
+# Frontend (Vite / Vue)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/.eslintcache
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# Backend (Java / Maven)
+backend/target/
+backend/*.releaseBackup
+backend/dependency-reduced-pom.xml
+backend/mvnw.cmd
+backend/maven/
