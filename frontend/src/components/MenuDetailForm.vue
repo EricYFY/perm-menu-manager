@@ -4,9 +4,9 @@
     <div class="form-header">
       <div class="form-title">
         <el-icon class="title-icon"><EditPen /></el-icon>
-        <span>菜单详情编辑</span>
+        <span>{{ isLocked ? '菜单详情查看' : '菜单详情编辑' }}</span>
       </div>
-      <div class="form-actions">
+      <div class="form-actions" v-if="!isLocked">
         <el-button @click="handleReset">
           <el-icon><RefreshLeft /></el-icon>
           重置
@@ -25,6 +25,7 @@
         label-width="210px"
         label-position="right"
         size="small"
+        :disabled="isLocked"
       >
         <el-collapse v-model="activeCollapse">
           <!-- 基础信息 -->
@@ -385,6 +386,16 @@ const props = defineProps({
   modelValue: {
     type: Object,
     default: null
+  },
+  /** 是否锁定状态（不允许编辑） */
+  isLocked: {
+    type: Boolean,
+    default: true
+  },
+  /** 临时表名 */
+  tempTableName: {
+    type: String,
+    default: ''
   }
 })
 
@@ -456,7 +467,7 @@ function handleReset() {
 async function handleSave() {
   saving.value = true
   try {
-    const result = await updateMenu(formData.value)
+    const result = await updateMenu(formData.value, props.tempTableName)
     if (result.code === 200) {
       ElMessage.success('保存成功')
       emit('refresh')
@@ -496,7 +507,7 @@ async function handleUpdateCode() {
       newMenuCode: editMenuCode.value.trim(),
       menuScope: formData.value.menuScope,
       tenantId: formData.value.tenantId
-    })
+    }, props.tempTableName)
 
     if (result.code === 200) {
       ElMessage.success('菜单编码修改成功')

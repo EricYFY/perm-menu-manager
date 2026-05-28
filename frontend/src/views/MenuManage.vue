@@ -5,10 +5,29 @@
       <div class="header-left">
         <el-icon class="header-logo"><Grid /></el-icon>
         <h1 class="gradient-text">菜单层级管理系统</h1>
+        <el-tag :type="isLocked ? 'info' : 'warning'" effect="dark" style="margin-left: 12px">
+          {{ isLocked ? '正式表 (只读)' : '临时表 (编辑中)' }}
+        </el-tag>
       </div>
-      <div class="header-badge">
-        <span class="badge-dot"></span>
-        <span>perm_menu</span>
+      <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+        <div class="header-badge" v-if="tempTableName">
+          <span class="badge-dot" style="background: var(--warning-color); box-shadow: 0 0 8px rgba(230, 162, 60, 0.6);"></span>
+          <span>{{ tempTableName }}</span>
+        </div>
+        <div class="header-badge" v-else>
+          <span class="badge-dot"></span>
+          <span>perm_menu</span>
+        </div>
+
+        <el-button v-if="isLocked" type="primary" @click="handleUnlock" :loading="unlocking">
+          <el-icon><Unlock /></el-icon> 解锁编辑
+        </el-button>
+        <template v-else>
+          <el-button type="success" @click="handleSaveAll" :loading="loadingLogs">
+            <el-icon><Check /></el-icon> 保存并执行
+          </el-button>
+          <el-button type="danger" plain @click="handleCancelEdit">取消编辑</el-button>
+        </template>
       </div>
     </header>
 
@@ -45,7 +64,7 @@
                 <el-icon><List /></el-icon>
                 菜单树
               </h3>
-              <el-button type="primary" size="small" @click="handleAddRoot">
+              <el-button type="primary" size="small" @click="handleAddRoot" v-if="!isLocked">
                 <el-icon><Plus /></el-icon>
                 新增根菜单
               </el-button>
@@ -54,6 +73,8 @@
               <MenuTree
                 ref="menuTreeRef"
                 :menu-scope="activeTab"
+                :is-locked="isLocked"
+                :temp-table-name="tempTableName"
                 @select="handleMenuSelect"
               />
             </div>
@@ -65,20 +86,33 @@
           <div class="plain-light-panel detail-panel animate-slide-right">
             <MenuDetailForm
               :model-value="selectedMenu"
+              :is-locked="isLocked"
+              :temp-table-name="tempTableName"
               @refresh="handleRefresh"
             />
           </div>
         </el-col>
       </el-row>
     </div>
+
+    <!-- SQL预览确认弹窗 -->
+    <SqlPreviewDialog
+      v-model="previewDialogVisible"
+      :temp-table-name="tempTableName"
+      :sql-log="sqlLogs"
+      @finish="handlePreviewFinish"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Grid, Monitor, Iphone, List, Plus } from '@element-plus/icons-vue'
+import { ref, onMounted, nextTick } from 'vue'
+import { Grid, Monitor, Iphone, List, Plus, Unlock, Check } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import MenuTree from '../components/MenuTree.vue'
 import MenuDetailForm from '../components/MenuDetailForm.vue'
+import SqlPreviewDialog from '../components/SqlPreviewDialog.vue'
+import { getSessionStatus, unlockSession, cancelSession, getSqlLog } from '../api/session.js'
 
 // 当前页签：11=PC端, 12=APP端
 const activeTab = ref('11')
@@ -88,6 +122,138 @@ const selectedMenu = ref(null)
 
 // 树组件引用
 const menuTreeRef = ref(null)
+
+// 锁定状态与临时表
+const isLocked = ref(true)
+const tempTableName = ref('')
+const unlocking = ref(false)
+
+// 预览弹窗状态
+const previewDialogVisible = ref(false)
+const sqlLogs = ref([])
+const loadingLogs = ref(false)
+
+/**
+ * 页面加载时检查状态
+ */
+onMounted(async () => {
+  try {
+    const res = await getSessionStatus()
+    if (res.code === 200 && res.data.isLocked) {
+      // 检查当前锁定人是不是自己
+      const myId = getMyLockId()
+      if (res.data.lockedBy === myId) {
+        // 我自己锁定的，可以继续编辑
+        isLocked.value = false
+        tempTableName.value = res.data.tempTableName
+        ElMessage.info('已恢复之前的编辑会话')
+      } else {
+        // 别人锁定的
+        isLocked.value = true
+        tempTableName.value = ''
+        ElMessage.warning(`当前由 ${res.data.lockedBy} 在编辑，您只能查看。`)
+      }
+    } else {
+      isLocked.value = true
+      tempTableName.value = ''
+    }
+  } catch (error) {
+    console.error('获取会话状态失败', error)
+  }
+})
+
+/**
+ * 获取或生成当前用户标识
+ */
+function getMyLockId() {
+  let id = localStorage.getItem('perm_menu_uid')
+  if (!id) {
+    id = 'user_' + Math.random().toString(36).substr(2, 9)
+    localStorage.setItem('perm_menu_uid', id)
+  }
+  return id
+}
+
+/**
+ * 解锁编辑
+ */
+async function handleUnlock() {
+  unlocking.value = true
+  try {
+    const res = await unlockSession(getMyLockId())
+    if (res.code === 200) {
+      isLocked.value = false
+      tempTableName.value = res.data.tempTableName
+      ElMessage.success('解锁成功，进入编辑模式')
+      handleRefresh()
+    } else {
+      ElMessage.error(res.message || '解锁失败')
+    }
+  } catch (error) {
+    ElMessage.error('解锁请求异常，可能已被他人锁定')
+  } finally {
+    unlocking.value = false
+  }
+}
+
+/**
+ * 取消编辑
+ */
+function handleCancelEdit() {
+  ElMessageBox.confirm(
+    '取消编辑将丢弃所有未保存的更改，并删除临时表。是否确认？',
+    '警告',
+    {
+      confirmButtonText: '确定放弃',
+      cancelButtonText: '继续编辑',
+      type: 'warning'
+    }
+  ).then(async () => {
+    try {
+      await cancelSession(tempTableName.value)
+      ElMessage.success('已取消编辑')
+      isLocked.value = true
+      tempTableName.value = ''
+      await nextTick()
+      handleRefresh()
+    } catch (e) {
+      ElMessage.error('取消失败')
+    }
+  }).catch(() => {})
+}
+
+/**
+ * 保存并执行
+ */
+async function handleSaveAll() {
+  loadingLogs.value = true
+  try {
+    const res = await getSqlLog(tempTableName.value)
+    if (res.code === 200) {
+      sqlLogs.value = res.data || []
+      previewDialogVisible.value = true
+    } else {
+      ElMessage.error(res.message || '获取日志失败')
+    }
+  } catch (e) {
+    ElMessage.error('获取变更日志异常')
+  } finally {
+    loadingLogs.value = false
+  }
+}
+
+/**
+ * 预览弹窗完成操作（执行成功）
+ * @param {boolean} isDropped 是否已删除临时表
+ */
+async function handlePreviewFinish(isDropped) {
+  if (isDropped) {
+    isLocked.value = true
+    tempTableName.value = ''
+  }
+  await nextTick()
+  handleRefresh()
+}
 
 /**
  * 页签切换

@@ -21,43 +21,57 @@ request.interceptors.response.use(
  * 获取菜单树
  * @param {string} menuScope - 菜单渠道（11=PC端, 12=APP端）
  * @param {string} tenantId - 租户号
+ * @param {string} tempTableName - 临时表名
  */
-export function getMenuTree(menuScope, tenantId = '047') {
+export function getMenuTree(menuScope, tenantId = '047', tempTableName = '') {
   return request.get(`/menu/tree/${menuScope}`, {
-    params: { tenantId }
+    params: { tenantId },
+    headers: tempTableName ? { 'X-Temp-Table': tempTableName } : {}
   })
 }
 
 /**
  * 新增菜单
  * @param {object} data - 菜单数据
+ * @param {string} tempTableName - 临时表名
  */
-export function addMenu(data) {
-  return request.post('/menu', data)
+export function addMenu(data, tempTableName = '') {
+  return request.post('/menu', data, {
+    headers: tempTableName ? { 'X-Temp-Table': tempTableName } : {}
+  })
 }
 
 /**
  * 更新菜单（普通字段）
  * @param {object} data - 菜单数据
+ * @param {string} tempTableName - 临时表名
  */
-export function updateMenu(data) {
-  return request.put('/menu', data)
+export function updateMenu(data, tempTableName = '') {
+  return request.put('/menu', data, {
+    headers: tempTableName ? { 'X-Temp-Table': tempTableName } : {}
+  })
 }
 
 /**
  * 修改菜单编码（含级联更新子菜单）
  * @param {object} data - { oldMenuCode, newMenuCode, menuScope, tenantId }
+ * @param {string} tempTableName - 临时表名
  */
-export function updateMenuCode(data) {
-  return request.put('/menu/code', data)
+export function updateMenuCode(data, tempTableName = '') {
+  return request.put('/menu/code', data, {
+    headers: tempTableName ? { 'X-Temp-Table': tempTableName } : {}
+  })
 }
 
 /**
  * 拖拽移动菜单
  * @param {object} data - { menuCode, newUppMenuCode, menuScope, tenantId }
+ * @param {string} tempTableName - 临时表名
  */
-export function dragMenu(data) {
-  return request.put('/menu/drag', data)
+export function dragMenu(data, tempTableName = '') {
+  return request.put('/menu/drag', data, {
+    headers: tempTableName ? { 'X-Temp-Table': tempTableName } : {}
+  })
 }
 
 /**
@@ -65,9 +79,11 @@ export function dragMenu(data) {
  * @param {string} menuScope - 菜单渠道
  * @param {string} menuCode - 菜单编码
  * @param {string} tenantId - 租户号
+ * @param {string} tempTableName - 临时表名
  */
-export function deleteMenu(menuScope, menuCode, tenantId = '047') {
+export function deleteMenu(menuScope, menuCode, tenantId = '047', tempTableName = '') {
   return request.delete(`/menu/${menuScope}/${menuCode}`, {
-    params: { tenantId }
+    params: { tenantId },
+    headers: tempTableName ? { 'X-Temp-Table': tempTableName } : {}
   })
 }

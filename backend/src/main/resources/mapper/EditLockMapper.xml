@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.permmenu.mapper.EditLockMapper">
+
+    <resultMap id="editLockResultMap" type="com.example.permmenu.entity.EditLock">
+        <id column="ID" property="id"/>
+        <result column="LOCKED_BY" property="lockedBy"/>
+        <result column="LOCKED_AT" property="lockedAt"/>
+        <result column="TEMP_TABLE_NAME" property="tempTableName"/>
+        <result column="STATUS" property="status"/>
+    </resultMap>
+
+    <!-- 查询所有活跃锁（STATUS='LOCKED' 且锁定时间距今不超过 timeoutHours 小时） -->
+    <select id="selectActiveLocks" resultMap="editLockResultMap">
+        SELECT ID, LOCKED_BY, LOCKED_AT, TEMP_TABLE_NAME, STATUS
+        FROM perm_menu_edit_lock
+        WHERE STATUS = 'LOCKED'
+          AND LOCKED_AT >= DATE_SUB(NOW(), INTERVAL #{timeoutHours} HOUR)
+    </select>
+
+    <!-- 插入锁记录 -->
+    <insert id="insertLock">
+        INSERT INTO perm_menu_edit_lock (LOCKED_BY, LOCKED_AT, TEMP_TABLE_NAME, STATUS)
+        VALUES (#{lock.lockedBy}, NOW(), #{lock.tempTableName}, 'LOCKED')
+    </insert>
+
+    <!-- 释放锁 -->
+    <update id="releaseLock">
+        UPDATE perm_menu_edit_lock
+        SET STATUS = 'RELEASED'
+        WHERE TEMP_TABLE_NAME = #{tempTableName}
+          AND STATUS = 'LOCKED'
+    </update>
+
+    <!-- 根据临时表名查询锁 -->
+    <select id="selectByTempTable" resultMap="editLockResultMap">
+        SELECT ID, LOCKED_BY, LOCKED_AT, TEMP_TABLE_NAME, STATUS
+        FROM perm_menu_edit_lock
+        WHERE TEMP_TABLE_NAME = #{tempTableName}
+        ORDER BY ID DESC
+        LIMIT 1
+    </select>
+
+</mapper>

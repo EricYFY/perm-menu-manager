@@ -42,7 +42,7 @@
         :highlight-current="true"
         :default-expand-all="false"
         :default-expanded-keys="expandedKeys"
-        draggable
+        :draggable="!isLocked"
         :allow-drop="handleAllowDrop"
         :filter-node-method="filterNode"
         @node-click="handleNodeClick"
@@ -73,7 +73,7 @@
                 </span>
               </div>
             </el-tooltip>
-            <div class="tree-node-actions">
+            <div class="tree-node-actions" v-if="!isLocked">
               <el-tooltip content="新增子菜单" placement="top" :show-after="500">
                 <el-icon class="action-icon add-icon" @click.stop="handleAddChild(data)">
                   <Plus />
@@ -97,6 +97,7 @@
       v-model="addDialogVisible"
       :menu-scope="menuScope"
       :parent-menu="addParentMenu"
+      :temp-table-name="tempTableName"
       @success="handleAddSuccess"
     />
   </div>
@@ -114,6 +115,16 @@ const props = defineProps({
   menuScope: {
     type: String,
     required: true
+  },
+  /** 是否锁定状态（不允许编辑） */
+  isLocked: {
+    type: Boolean,
+    default: true
+  },
+  /** 临时表名 */
+  tempTableName: {
+    type: String,
+    default: ''
   }
 })
 
@@ -163,7 +174,7 @@ async function loadTree(keepState = false) {
   }
 
   try {
-    const result = await getMenuTree(props.menuScope)
+    const result = await getMenuTree(props.menuScope, '047', props.tempTableName)
     if (result.code === 200) {
       treeData.value = result.data || []
       
@@ -355,7 +366,7 @@ async function handleNodeDrop(draggingNode, dropNode, dropType) {
         newUppMenuCode: dropNode.data.menuCode,
         menuScope: props.menuScope,
         tenantId: '047'
-      })
+      }, props.tempTableName)
       if (result.code !== 200) {
         throw new Error(result.message || '跨级层级移动失败')
       }
@@ -385,7 +396,7 @@ async function handleNodeDrop(draggingNode, dropNode, dropType) {
           nodeData.menuLevel = 9
         }
         
-        updatePromises.push(updateMenu(savePayload))
+        updatePromises.push(updateMenu(savePayload, props.tempTableName))
       }
     }
 
@@ -446,7 +457,7 @@ async function handleDelete(data) {
       dangerouslyUseHTMLString: false
     })
 
-    const result = await deleteMenu(props.menuScope, data.menuCode)
+    const result = await deleteMenu(props.menuScope, data.menuCode, '047', props.tempTableName)
     if (result.code === 200) {
       ElMessage.success('删除成功')
       await loadTree()

@@ -286,6 +286,11 @@ const props = defineProps({
   parentMenu: {
     type: Object,
     default: null
+  },
+  /** 临时表名 */
+  tempTableName: {
+    type: String,
+    default: ''
   }
 })
 
@@ -402,7 +407,7 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    const result = await addMenu({ ...formData })
+    const result = await addMenu({ ...formData }, props.tempTableName)
     if (result.code === 200) {
       ElMessage.success('新增菜单成功')
       emit('update:modelValue', false)

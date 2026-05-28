@@ -59,7 +59,7 @@
     <!-- 查询指定渠道的所有菜单 -->
     <select id="selectByScope" resultMap="permMenuResultMap">
         SELECT <include refid="allColumns"/>
-        FROM perm_menu
+        FROM ${tableName}
         WHERE MENU_SCOPE = #{menuScope}
           AND TENANT_ID = #{tenantId}
         ORDER BY SORT_NO
@@ -68,7 +68,7 @@
     <!-- 根据复合主键查询 -->
     <select id="selectByKey" resultMap="permMenuResultMap">
         SELECT <include refid="allColumns"/>
-        FROM perm_menu
+        FROM ${tableName}
         WHERE MENU_CODE = #{menuCode}
           AND MENU_SCOPE = #{menuScope}
           AND TENANT_ID = #{tenantId}
@@ -76,7 +76,7 @@
 
     <!-- 批量更新子菜单的上级编码 -->
     <update id="updateUppMenuCode">
-        UPDATE perm_menu
+        UPDATE ${tableName}
         SET UPP_MENU_CODE = #{newCode}
         WHERE UPP_MENU_CODE = #{oldCode}
           AND MENU_SCOPE = #{menuScope}
@@ -85,7 +85,7 @@
 
     <!-- 根据复合主键删除 -->
     <delete id="deleteByKey">
-        DELETE FROM perm_menu
+        DELETE FROM ${tableName}
         WHERE MENU_CODE = #{menuCode}
           AND MENU_SCOPE = #{menuScope}
           AND TENANT_ID = #{tenantId}
@@ -94,7 +94,7 @@
     <!-- 查询直接子菜单 -->
     <select id="selectChildren" resultMap="permMenuResultMap">
         SELECT <include refid="allColumns"/>
-        FROM perm_menu
+        FROM ${tableName}
         WHERE UPP_MENU_CODE = #{uppMenuCode}
           AND MENU_SCOPE = #{menuScope}
           AND TENANT_ID = #{tenantId}
@@ -105,7 +105,7 @@
     <select id="selectAllDescendants" resultMap="permMenuResultMap">
         WITH RECURSIVE descendants AS (
             SELECT <include refid="allColumns"/>
-            FROM perm_menu
+            FROM ${tableName}
             WHERE UPP_MENU_CODE = #{uppMenuCode}
               AND MENU_SCOPE = #{menuScope}
               AND TENANT_ID = #{tenantId}
@@ -119,7 +119,7 @@
                    m.FOLDER_CODE, m.BIZ_CATEGORY_NO, m.BIZ_CATEGORY_NAME, m.MENU_ICON,
                    m.MENU_HERF_TYPE, m.MENU_HERF, m.MENU_ATTRIBUTE, m.ICON_FLAG,
                    m.IS_KEEP_ALIVE, m.JUMP_HERF, m.TB_VERSION, m.DESCRIPTION
-            FROM perm_menu m
+            FROM ${tableName} m
             INNER JOIN descendants d ON m.UPP_MENU_CODE = d.MENU_CODE
                 AND m.MENU_SCOPE = d.MENU_SCOPE
                 AND m.TENANT_ID = d.TENANT_ID
@@ -129,7 +129,7 @@
 
     <!-- 插入菜单记录 -->
     <insert id="insertMenu">
-        INSERT INTO perm_menu (
+        INSERT INTO ${tableName} (
             TENANT_ID, STAT, MENU_SCOPE, MENU_CODE, MENU_NAME, MENU_LEVEL, MENU_TYPE,
             UPP_MENU_CODE, MENU_CHECKED, MENU_KIND, MENU_VERIFY, MENU_DISPLAY,
             TR_CODE, SECURITY_TR_CODE, CTRL_ATTI, BIZ_ATTI, ACCT_AUTH_ATTI, ASAC_AUTH_ATTI,
@@ -153,7 +153,7 @@
 
     <!-- 根据复合主键更新（不更新主键字段） -->
     <update id="updateByKey">
-        UPDATE perm_menu
+        UPDATE ${tableName}
         SET MENU_NAME = #{menu.menuName},
             MENU_LEVEL = #{menu.menuLevel},
             MENU_TYPE = #{menu.menuType},
@@ -193,5 +193,12 @@
           AND MENU_SCOPE = #{menu.menuScope}
           AND TENANT_ID = #{menu.tenantId}
     </update>
+
+    <!-- 查询指定表的全部数据（用于一致性比对） -->
+    <select id="selectAll" resultMap="permMenuResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM ${tableName}
+        ORDER BY MENU_SCOPE, MENU_CODE, TENANT_ID
+    </select>
 
 </mapper>
