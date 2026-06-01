@@ -25,6 +25,13 @@ public class PermMenuApplication {
                     "TEMP_TABLE_NAME VARCHAR(128), " +
                     "STATUS VARCHAR(16))";
             jdbcTemplate.execute(createTableSql);
+
+            // 如果已有表，补充 SUBSYSTEM_CODE 字段
+            try {
+                jdbcTemplate.execute("ALTER TABLE perm_menu_edit_lock ADD COLUMN SUBSYSTEM_CODE VARCHAR(64)");
+            } catch (Exception e) {
+                // 字段已存在时会报错，忽略即可
+            }
         };
     }
 }

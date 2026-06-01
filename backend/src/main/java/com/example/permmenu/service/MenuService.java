@@ -18,9 +18,10 @@ public interface MenuService {
      * @param menuScope 菜单渠道
      * @param tenantId  租户号
      * @param tableName 表名（正式表或临时表）
-     * @return 菜单树节点列表（根节点）
+     * @param subsystemCode 子系统编码
+     * @return 树状结构列表
      */
-    List<MenuTreeNode> getMenuTree(String menuScope, String tenantId, String tableName);
+    List<MenuTreeNode> getMenuTree(String menuScope, String tenantId, String tableName, String subsystemCode);
 
     /**
      * 新增菜单

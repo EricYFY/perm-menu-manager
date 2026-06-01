@@ -25,11 +25,16 @@ export function getSessionStatus() {
 }
 
 /**
- * 解锁进入编辑模式
- * @param {string} lockedBy - 锁定人标识
+ * 解锁编辑模式（创建临时表）
+ * @param {string} lockedBy - 锁定人唯一标识
+ * @param {string} subsystemCode - 子系统编码过滤
  */
-export function unlockSession(lockedBy) {
-  return request.post('/session/unlock', { lockedBy })
+export function unlockSession(lockedBy, subsystemCode = 'ITS_PORTAL') {
+  return request({
+    url: '/session/unlock',
+    method: 'post',
+    data: { lockedBy, subsystemCode }
+  })
 }
 
 /**

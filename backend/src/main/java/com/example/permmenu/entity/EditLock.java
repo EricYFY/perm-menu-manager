@@ -25,4 +25,7 @@ public class EditLock {
 
     /** 状态：LOCKED / RELEASED */
     private String status;
+
+    /** 子系统编码过滤条件 */
+    private String subsystemCode;
 }

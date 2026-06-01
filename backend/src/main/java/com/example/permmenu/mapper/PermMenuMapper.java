@@ -14,14 +14,16 @@ public interface PermMenuMapper extends BaseMapper<PermMenu> {
     /**
      * 查询指定渠道的所有菜单
      *
-     * @param menuScope 菜单渠道
-     * @param tenantId  租户号
-     * @param tableName 表名（支持动态切换正式表/临时表）
+     * @param menuScope     菜单渠道
+     * @param tenantId      租户号
+     * @param tableName     表名（支持动态切换正式表/临时表）
+     * @param subsystemCode 子系统编码（可选过滤条件）
      * @return 菜单列表
      */
     List<PermMenu> selectByScope(@Param("menuScope") String menuScope,
                                  @Param("tenantId") String tenantId,
-                                 @Param("tableName") String tableName);
+                                 @Param("tableName") String tableName,
+                                 @Param("subsystemCode") String subsystemCode);
 
     /**
      * 根据复合主键查询菜单
@@ -116,10 +118,20 @@ public interface PermMenuMapper extends BaseMapper<PermMenu> {
                     @Param("tableName") String tableName);
 
     /**
-     * 查询指定表的所有数据（用于一致性比对）
+     * 查询指定表的全部数据（用于一致性比对）
      *
      * @param tableName 表名
      * @return 菜单列表
      */
     List<PermMenu> selectAll(@Param("tableName") String tableName);
+
+    /**
+     * 按子系统查询指定表的所有数据（用于带过滤条件的一致性比对）
+     *
+     * @param tableName     表名
+     * @param subsystemCode 子系统编码
+     * @return 菜单列表
+     */
+    List<PermMenu> selectAllBySubsystem(@Param("tableName") String tableName,
+                                        @Param("subsystemCode") String subsystemCode);
 }

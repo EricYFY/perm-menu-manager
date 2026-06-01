@@ -32,6 +32,7 @@ public class EditSessionController {
             result.put("lockedBy", lock.getLockedBy());
             result.put("lockedAt", lock.getLockedAt());
             result.put("tempTableName", lock.getTempTableName());
+            result.put("subsystemCode", lock.getSubsystemCode());
         } else {
             result.put("isLocked", false);
         }
@@ -47,10 +48,11 @@ public class EditSessionController {
     public ResultVO<Map<String, String>> unlockSession(@RequestBody Map<String, String> request) {
         try {
             String lockedBy = request.get("lockedBy");
+            String subsystemCode = request.getOrDefault("subsystemCode", "ITS_PORTAL");
             if (lockedBy == null || lockedBy.trim().isEmpty()) {
-                return ResultVO.error("缺少锁定人标识(lockedBy)");
+                return ResultVO.error("缺少 lockedBy 参数");
             }
-            String tempTableName = editSessionService.unlockSession(lockedBy);
+            String tempTableName = editSessionService.unlockSession(lockedBy, subsystemCode);
             Map<String, String> result = new HashMap<>();
             result.put("tempTableName", tempTableName);
             return ResultVO.success(result);

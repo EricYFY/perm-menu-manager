@@ -62,6 +62,9 @@
         FROM ${tableName}
         WHERE MENU_SCOPE = #{menuScope}
           AND TENANT_ID = #{tenantId}
+          <if test="subsystemCode != null and subsystemCode != ''">
+              AND SUBSYSTEM_CODE = #{subsystemCode}
+          </if>
         ORDER BY SORT_NO
     </select>
 
@@ -198,6 +201,17 @@
     <select id="selectAll" resultMap="permMenuResultMap">
         SELECT <include refid="allColumns"/>
         FROM ${tableName}
+        ORDER BY MENU_SCOPE, MENU_CODE, TENANT_ID
+    </select>
+
+    <!-- 查询指定表在特定子系统下的所有数据（用于一致性比对） -->
+    <select id="selectAllBySubsystem" resultMap="permMenuResultMap">
+        SELECT <include refid="allColumns"/>
+        FROM ${tableName}
+        WHERE 1=1
+        <if test="subsystemCode != null and subsystemCode != ''">
+            AND SUBSYSTEM_CODE = #{subsystemCode}
+        </if>
         ORDER BY MENU_SCOPE, MENU_CODE, TENANT_ID
     </select>
 

@@ -32,12 +32,12 @@ public class MenuServiceImpl implements MenuService {
      * 获取菜单树
      */
     @Override
-    public List<MenuTreeNode> getMenuTree(String menuScope, String tenantId, String tableName) {
+    public List<MenuTreeNode> getMenuTree(String menuScope, String tenantId, String tableName, String subsystemCode) {
         if (tableName == null || tableName.isEmpty()) {
             tableName = "perm_menu";
         }
         
-        List<PermMenu> menuList = permMenuMapper.selectByScope(menuScope, tenantId, tableName);
+        List<PermMenu> menuList = permMenuMapper.selectByScope(menuScope, tenantId, tableName, subsystemCode);
 
         List<MenuTreeNode> nodeList = menuList.stream()
                 .map(this::convertToTreeNode)

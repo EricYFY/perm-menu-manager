@@ -125,6 +125,11 @@ const props = defineProps({
   tempTableName: {
     type: String,
     default: ''
+  },
+  /** 子系统编码过滤 */
+  subsystemCode: {
+    type: String,
+    default: 'ITS_PORTAL'
   }
 })
 
@@ -174,7 +179,7 @@ async function loadTree(keepState = false) {
   }
 
   try {
-    const result = await getMenuTree(props.menuScope, '047', props.tempTableName)
+    const result = await getMenuTree(props.menuScope, '047', props.tempTableName, props.subsystemCode)
     if (result.code === 200) {
       treeData.value = result.data || []
       

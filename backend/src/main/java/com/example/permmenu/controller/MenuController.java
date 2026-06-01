@@ -23,16 +23,18 @@ public class MenuController {
      *
      * @param menuScope     菜单渠道（11-PC端，12-APP端）
      * @param tenantId      租户号，默认 047
+     * @param subsystemCode 子系统代码
      * @param tempTableName 临时表名
      * @return 菜单树
      */
-    @GetMapping("/tree/{menuScope}")
-    public ResultVO<List<MenuTreeNode>> getMenuTree(
-            @PathVariable String menuScope,
-            @RequestParam(defaultValue = "047") String tenantId,
-            @RequestHeader(value = "X-Temp-Table", required = false) String tempTableName) {
+    @GetMapping("/tree")
+    public ResultVO<List<MenuTreeNode>> getMenuTree(@RequestParam String menuScope,
+                                                    @RequestParam(defaultValue = "047") String tenantId,
+                                                    @RequestParam(defaultValue = "ITS_PORTAL") String subsystemCode,
+                                                    @RequestHeader(value = "X-Temp-Table", required = false) String tempTableName) {
         try {
-            List<MenuTreeNode> tree = menuService.getMenuTree(menuScope, tenantId, tempTableName);
+            String tableName = (tempTableName != null && !tempTableName.isEmpty()) ? tempTableName : "perm_menu";
+            List<MenuTreeNode> tree = menuService.getMenuTree(menuScope, tenantId, tableName, subsystemCode);
             return ResultVO.success(tree);
         } catch (Exception e) {
             return ResultVO.error("获取菜单树失败：" + e.getMessage());

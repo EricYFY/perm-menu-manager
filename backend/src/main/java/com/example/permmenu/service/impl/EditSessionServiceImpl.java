@@ -40,7 +40,7 @@ public class EditSessionServiceImpl implements EditSessionService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String unlockSession(String lockedBy) {
+    public String unlockSession(String lockedBy, String subsystemCode) {
         // 1. 校验是否有活跃锁
         EditLock activeLock = getActiveLock();
         if (activeLock != null) {
@@ -51,14 +51,15 @@ public class EditSessionServiceImpl implements EditSessionService {
         String timestamp = String.valueOf(System.currentTimeMillis());
         String tempTableName = "perm_menu_" + timestamp;
 
-        // 3. 创建临时表
-        String createTableSql = "CREATE TABLE " + tempTableName + " AS SELECT * FROM perm_menu";
+        // 3. 创建临时表（仅复制指定子系统数据）
+        String createTableSql = "CREATE TABLE " + tempTableName + " AS SELECT * FROM perm_menu WHERE SUBSYSTEM_CODE = '" + subsystemCode + "'";
         jdbcTemplate.execute(createTableSql);
 
         // 4. 插入锁记录
         EditLock lock = new EditLock();
         lock.setLockedBy(lockedBy);
         lock.setTempTableName(tempTableName);
+        lock.setSubsystemCode(subsystemCode);
         editLockMapper.insertLock(lock);
 
         // 5. 初始化 SQL 日志
@@ -99,9 +100,10 @@ public class EditSessionServiceImpl implements EditSessionService {
             successCount++;
         }
 
-        // 3. 一致性校验
-        List<PermMenu> formalList = permMenuMapper.selectAll("perm_menu");
-        List<PermMenu> tempList = permMenuMapper.selectAll(tempTableName);
+        // 3. 一致性校验（仅校验对应子系统范围内的数据）
+        String subsystemCode = lock.getSubsystemCode();
+        List<PermMenu> formalList = permMenuMapper.selectAllBySubsystem("perm_menu", subsystemCode);
+        List<PermMenu> tempList = permMenuMapper.selectAllBySubsystem(tempTableName, subsystemCode);
 
         Map<String, PermMenu> formalMap = new HashMap<>();
         for (PermMenu menu : formalList) {

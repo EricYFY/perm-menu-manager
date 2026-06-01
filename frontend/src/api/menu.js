@@ -19,14 +19,19 @@ request.interceptors.response.use(
 
 /**
  * 获取菜单树
- * @param {string} menuScope - 菜单渠道（11=PC端, 12=APP端）
+ * @param {string} menuScope - 菜单渠道 (11/12)
  * @param {string} tenantId - 租户号
  * @param {string} tempTableName - 临时表名
+ * @param {string} subsystemCode - 子系统编码
  */
-export function getMenuTree(menuScope, tenantId = '047', tempTableName = '') {
-  return request.get(`/menu/tree/${menuScope}`, {
-    params: { tenantId },
-    headers: tempTableName ? { 'X-Temp-Table': tempTableName } : {}
+export function getMenuTree(menuScope, tenantId = '047', tempTableName = '', subsystemCode = 'ITS_PORTAL') {
+  return request({
+    url: '/menu/tree',
+    method: 'get',
+    params: { menuScope, tenantId, subsystemCode },
+    headers: {
+      'X-Temp-Table': tempTableName
+    }
   })
 }
 

@@ -18,12 +18,13 @@ public interface EditSessionService {
     EditLock getActiveLock();
 
     /**
-     * 解锁进入编辑模式
+     * 申请解锁编辑模式
      *
-     * @param lockedBy 锁定人标识
-     * @return 创建的临时表名
+     * @param lockedBy 申请人唯一标识
+     * @param subsystemCode 子系统编码
+     * @return 临时表名
      */
-    String unlockSession(String lockedBy);
+    String unlockSession(String lockedBy, String subsystemCode);
 
     /**
      * 获取指定临时表的 SQL 日志

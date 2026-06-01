@@ -19,6 +19,17 @@
           <span>perm_menu</span>
         </div>
 
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 14px; font-weight: 500; color: var(--text-regular);">子系统:</span>
+          <el-input 
+            v-model="subsystemCode" 
+            placeholder="请输入 SUBSYSTEM_CODE" 
+            :disabled="!isLocked"
+            style="width: 160px;"
+            @change="handleRefresh"
+          />
+        </div>
+
         <el-button v-if="isLocked" type="primary" @click="handleUnlock" :loading="unlocking">
           <el-icon><Unlock /></el-icon> 解锁编辑
         </el-button>
@@ -75,6 +86,7 @@
                 :menu-scope="activeTab"
                 :is-locked="isLocked"
                 :temp-table-name="tempTableName"
+                :subsystem-code="subsystemCode"
                 @select="handleMenuSelect"
               />
             </div>
@@ -126,6 +138,7 @@ const menuTreeRef = ref(null)
 // 锁定状态与临时表
 const isLocked = ref(true)
 const tempTableName = ref('')
+const subsystemCode = ref('ITS_PORTAL')
 const unlocking = ref(false)
 
 // 预览弹窗状态
@@ -146,11 +159,17 @@ onMounted(async () => {
         // 我自己锁定的，可以继续编辑
         isLocked.value = false
         tempTableName.value = res.data.tempTableName
+        if (res.data.subsystemCode) {
+          subsystemCode.value = res.data.subsystemCode
+        }
         ElMessage.info('已恢复之前的编辑会话')
       } else {
         // 别人锁定的
         isLocked.value = true
         tempTableName.value = ''
+        if (res.data.subsystemCode) {
+          subsystemCode.value = res.data.subsystemCode
+        }
         ElMessage.warning(`当前由 ${res.data.lockedBy} 在编辑，您只能查看。`)
       }
     } else {
@@ -178,9 +197,13 @@ function getMyLockId() {
  * 解锁编辑
  */
 async function handleUnlock() {
+  if (!subsystemCode.value || subsystemCode.value.trim() === '') {
+    ElMessage.warning('子系统编码不能为空')
+    return
+  }
   unlocking.value = true
   try {
-    const res = await unlockSession(getMyLockId())
+    const res = await unlockSession(getMyLockId(), subsystemCode.value)
     if (res.code === 200) {
       isLocked.value = false
       tempTableName.value = res.data.tempTableName
