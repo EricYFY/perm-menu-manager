@@ -30,7 +30,7 @@ public class MenuController {
     @GetMapping("/tree")
     public ResultVO<List<MenuTreeNode>> getMenuTree(@RequestParam String menuScope,
                                                     @RequestParam(defaultValue = "047") String tenantId,
-                                                    @RequestParam(defaultValue = "ITS_PORTAL") String subsystemCode,
+                                                    @RequestParam(required = false) String subsystemCode,
                                                     @RequestHeader(value = "X-Temp-Table", required = false) String tempTableName) {
         try {
             String tableName = (tempTableName != null && !tempTableName.isEmpty()) ? tempTableName : "perm_menu";

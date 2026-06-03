@@ -41,4 +41,12 @@ public interface EditLockMapper {
      * @return 锁实体
      */
     EditLock selectByTempTable(@Param("tempTableName") String tempTableName);
+
+    /**
+     * 查询是否有比当前锁更新的记录
+     *
+     * @param lockId 锁记录ID
+     * @return 更新的锁记录数量
+     */
+    int countNewerLocks(@Param("lockId") Long lockId);
 }

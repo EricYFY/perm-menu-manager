@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.permmenu.mapper.JnlMapper">
+
+    <resultMap id="tbspJnlResultMap" type="com.example.permmenu.entity.TbspJnl">
+        <result column="TENANT_ID" property="tenantId" />
+        <result column="JNL_STAT" property="jnlStat" />
+        <result column="BIZ_STAT" property="bizStat" />
+        <result column="CHANNEL_NO" property="channelNo" />
+        <result column="CUST_NO" property="custNo" />
+        <result column="ORGANIZATION_NO" property="organizationNo" />
+        <result column="USER_ID" property="userId" />
+        <result column="USER_NO" property="userNo" />
+        <result column="USER_NAME" property="userName" />
+        <result column="TR_CODE" property="trCode" />
+        <result column="PROD_GROUP_NO" property="prodGroupNo" />
+        <result column="PROD_CODE" property="prodCode" />
+        <result column="MENU_CODE" property="menuCode" />
+        <result column="MENU_NAME" property="menuName" />
+        <result column="TR_DATE" property="trDate" />
+        <result column="TR_TIME" property="trTime" />
+        <result column="SERIAL_NO" property="serialNo" />
+        <result column="REQ_DATE" property="reqDate" />
+        <result column="REQ_TIME" property="reqTime" />
+        <result column="REQ_SERIAL_NO" property="reqSerialNo" />
+        <result column="ORIG_DATE" property="origDate" />
+        <result column="ORIG_TIME" property="origTime" />
+        <result column="ORIG_SERIAL_NO" property="origSerialNo" />
+        <result column="REFER_SERIAL_NO" property="referSerialNo" />
+        <result column="OUT_SERIAL_NO" property="outSerialNo" />
+        <result column="TRACE_ID" property="traceId" />
+        <result column="ORDER_NO" property="orderNo" />
+        <result column="ASSET_NO" property="assetNo" />
+        <result column="ASSET_UNIT" property="assetUnit" />
+        <result column="AMT" property="amt" />
+        <result column="IP" property="ip" />
+        <result column="MAC" property="mac" />
+        <result column="DEVICE_NO" property="deviceNo" />
+        <result column="DEVICE_NAME" property="deviceName" />
+        <result column="PRINT_TIMES" property="printTimes" />
+        <result column="RESP_CODE" property="respCode" />
+        <result column="RESP_MSG" property="respMsg" />
+        <result column="RESP_EXT" property="respExt" />
+        <result column="SUMMARY" property="summary" />
+        <result column="EXT_JSON" property="extJson" />
+        <result column="CRE_DATE" property="creDate" />
+        <result column="UPD_DATE" property="updDate" />
+        <result column="USER_TYPE" property="userType" />
+        <result column="MENU_TYPE" property="menuType" />
+    </resultMap>
+
+    <select id="selectJnlPage" resultMap="tbspJnlResultMap">
+        SELECT *
+        FROM ${tableName}
+        WHERE 1=1
+        <if test="trCode != null and trCode != ''">
+            AND TR_CODE = #{trCode}
+        </if>
+        <if test="custNo != null and custNo != ''">
+            AND CUST_NO = #{custNo}
+        </if>
+        <if test="jnlStat != null and jnlStat != ''">
+            AND JNL_STAT = #{jnlStat}
+        </if>
+        <if test="channelNo != null and channelNo != ''">
+            AND CHANNEL_NO = #{channelNo}
+        </if>
+        ORDER BY TR_DATE DESC, TR_TIME DESC
+    </select>
+
+    <resultMap id="tbspDataResultMap" type="com.example.permmenu.entity.TbspData">
+        <result column="TENANT_ID" property="tenantId" />
+        <result column="CUST_NO" property="custNo" />
+        <result column="SERIAL_NO" property="serialNo" />
+        <result column="REQUEST_CONTEXT" property="requestContext" />
+        <result column="RESPONSE_CONTEXT" property="responseContext" />
+        <result column="MIRROR_CONTEXT" property="mirrorContext" />
+        <result column="CERT_CN" property="certCn" />
+        <result column="SIGN_CONTENT" property="signContent" />
+        <result column="SIGN_DATA" property="signData" />
+        <result column="CRE_DATE" property="creDate" />
+        <result column="UPD_DATE" property="updDate" />
+    </resultMap>
+
+    <select id="selectTbspData" resultMap="tbspDataResultMap">
+        SELECT *
+        FROM ${tableName}
+        WHERE SERIAL_NO = #{serialNo}
+        LIMIT 1
+    </select>
+
+    <select id="countSuccess" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM ${tableName}
+        WHERE TR_CODE = #{trCode}
+          AND CUST_NO = #{custNo}
+          AND JNL_STAT = 'S'
+        <if test="channelNo != null and channelNo != ''">
+            AND CHANNEL_NO = #{channelNo}
+        </if>
+        LIMIT 1
+    </select>
+
+</mapper>

@@ -51,8 +51,13 @@ public class EditSessionServiceImpl implements EditSessionService {
         String timestamp = String.valueOf(System.currentTimeMillis());
         String tempTableName = "perm_menu_" + timestamp;
 
-        // 3. 创建临时表（仅复制指定子系统数据）
-        String createTableSql = "CREATE TABLE " + tempTableName + " AS SELECT * FROM perm_menu WHERE SUBSYSTEM_CODE = '" + subsystemCode + "'";
+        // 3. 创建临时表（支持全量或按子系统复制）
+        String createTableSql;
+        if (subsystemCode == null || subsystemCode.trim().isEmpty()) {
+            createTableSql = "CREATE TABLE " + tempTableName + " AS SELECT * FROM perm_menu";
+        } else {
+            createTableSql = "CREATE TABLE " + tempTableName + " AS SELECT * FROM perm_menu WHERE SUBSYSTEM_CODE = '" + subsystemCode + "'";
+        }
         jdbcTemplate.execute(createTableSql);
 
         // 4. 插入锁记录
@@ -70,6 +75,15 @@ public class EditSessionServiceImpl implements EditSessionService {
 
     @Override
     public List<String> getSqlLog(String tempTableName) {
+        // 校验是否有被挤占的情况
+        EditLock lock = editLockMapper.selectByTempTable(tempTableName);
+        if (lock != null) {
+            int newerLocks = editLockMapper.countNewerLocks(lock.getId());
+            if (newerLocks > 0) {
+                dropTempTable(tempTableName);
+                throw new RuntimeException("由于您操作时间过长，且期间已有新用户解锁过系统，您此次的编辑已无效被强制废弃，请重新刷新页面再试！");
+            }
+        }
         return sqlLogs.getOrDefault(tempTableName, Collections.emptyList());
     }
 
@@ -85,6 +99,13 @@ public class EditSessionServiceImpl implements EditSessionService {
         EditLock lock = editLockMapper.selectByTempTable(tempTableName);
         if (lock == null || !"LOCKED".equals(lock.getStatus())) {
             throw new RuntimeException("锁已失效或不存在该会话");
+        }
+
+        // 2. 校验是否有被挤占的情况（超时后被别人解锁）
+        int newerLocks = editLockMapper.countNewerLocks(lock.getId());
+        if (newerLocks > 0) {
+            dropTempTable(tempTableName);
+            throw new RuntimeException("由于您操作时间过长，且期间已有新用户解锁过系统，您此次的编辑已无效被强制废弃，请重新刷新页面再试！");
         }
 
         List<String> logs = getSqlLog(tempTableName);

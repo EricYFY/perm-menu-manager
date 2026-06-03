@@ -19,15 +19,31 @@
           <span>perm_menu</span>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 14px; font-weight: 500; color: var(--text-regular);">子系统:</span>
-          <el-input 
-            v-model="subsystemCode" 
-            placeholder="请输入 SUBSYSTEM_CODE" 
-            :disabled="!isLocked"
-            style="width: 160px;"
-            @change="handleRefresh"
-          />
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 14px; font-weight: 500; color: var(--text-regular);">子系统:</span>
+            <el-input 
+              v-model="subsystemCode" 
+              placeholder="请输入 SUBSYSTEM_CODE" 
+              :disabled="!isLocked"
+              style="width: 160px;"
+              @change="handleRefresh"
+            />
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 14px; font-weight: 500; color: var(--text-regular);">客户号:</span>
+            <el-select 
+              v-model="globalCustNo" 
+              multiple 
+              filterable 
+              allow-create
+              default-first-option
+              placeholder="请添加交易客户号" 
+              style="width: 280px;"
+            >
+              <el-option label="2001993301" value="2001993301" />
+            </el-select>
+          </div>
         </div>
 
         <el-button v-if="isLocked" type="primary" @click="handleUnlock" :loading="unlocking">
@@ -41,6 +57,16 @@
         </template>
       </div>
     </header>
+
+    <!-- 超时提示警告 -->
+    <div v-if="!isLocked" class="warning-alert animate-fade-in" style="margin-bottom: 12px; flex-shrink: 0;">
+      <el-alert 
+        title="温馨提示：请及时保存您的修改。如超过 2 小时未保存，其他用户可获取编辑锁，届时您此次的编辑将被强制作废处理！" 
+        type="warning" 
+        show-icon 
+        :closable="false"
+      />
+    </div>
 
     <!-- 页签切换 -->
     <div class="tabs-container animate-fade-in" style="animation-delay: 0.1s;">
@@ -100,6 +126,7 @@
               :model-value="selectedMenu"
               :is-locked="isLocked"
               :temp-table-name="tempTableName"
+              :global-cust-no="globalCustNo"
               @refresh="handleRefresh"
             />
           </div>
@@ -139,6 +166,7 @@ const menuTreeRef = ref(null)
 const isLocked = ref(true)
 const tempTableName = ref('')
 const subsystemCode = ref('ITS_PORTAL')
+const globalCustNo = ref(['2001993301'])
 const unlocking = ref(false)
 
 // 预览弹窗状态
@@ -159,7 +187,7 @@ onMounted(async () => {
         // 我自己锁定的，可以继续编辑
         isLocked.value = false
         tempTableName.value = res.data.tempTableName
-        if (res.data.subsystemCode) {
+        if (res.data.subsystemCode !== undefined && res.data.subsystemCode !== null) {
           subsystemCode.value = res.data.subsystemCode
         }
         ElMessage.info('已恢复之前的编辑会话')
@@ -167,7 +195,7 @@ onMounted(async () => {
         // 别人锁定的
         isLocked.value = true
         tempTableName.value = ''
-        if (res.data.subsystemCode) {
+        if (res.data.subsystemCode !== undefined && res.data.subsystemCode !== null) {
           subsystemCode.value = res.data.subsystemCode
         }
         ElMessage.warning(`当前由 ${res.data.lockedBy} 在编辑，您只能查看。`)
@@ -197,10 +225,6 @@ function getMyLockId() {
  * 解锁编辑
  */
 async function handleUnlock() {
-  if (!subsystemCode.value || subsystemCode.value.trim() === '') {
-    ElMessage.warning('子系统编码不能为空')
-    return
-  }
   unlocking.value = true
   try {
     const res = await unlockSession(getMyLockId(), subsystemCode.value)

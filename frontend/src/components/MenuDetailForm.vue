@@ -5,6 +5,49 @@
       <div class="form-title">
         <el-icon class="title-icon"><EditPen /></el-icon>
         <span>{{ isLocked ? '菜单详情查看' : '菜单详情编辑' }}</span>
+        <template v-if="formData.menuLevel === 9">
+          <el-tag 
+            v-if="checkingSuccess" 
+            type="info" 
+            style="margin-left: 12px;"
+          >正在校验状态...</el-tag>
+          <el-tag 
+            v-else-if="isSuccessCalled" 
+            type="success" 
+            effect="dark"
+            style="margin-left: 12px;"
+          >已成功调用</el-tag>
+          <el-tag 
+            v-else 
+            type="info" 
+            style="margin-left: 12px;"
+          >未成功调用</el-tag>
+
+          <el-button 
+            type="primary" 
+            size="small" 
+            plain 
+            @click="jnlDialogVisible = true"
+            style="margin-left: 16px;">
+            查看历史交易
+          </el-button>
+        </template>
+        <template v-else>
+          <el-button 
+            v-if="totalInterfaces > 0"
+            type="primary" 
+            size="small" 
+            plain 
+            @click="checkAllInterfaces"
+            :loading="checkingAll"
+            style="margin-left: 16px;">
+            统计接口调用情况
+          </el-button>
+          <span v-if="hasCheckedAll" style="margin-left: 12px; font-size: 13px; color: var(--text-secondary);">
+            接口总数: {{ totalInterfaces }} | 已成功调用: 
+            <span style="color: var(--success-color); font-weight: bold; font-size: 14px;">{{ successInterfacesCount }}</span>
+          </span>
+        </template>
       </div>
       <div class="form-actions" v-if="!isLocked">
         <el-button @click="handleReset">
@@ -370,6 +413,14 @@
       <p>点击左侧菜单树中的节点，即可在此处编辑菜单详情</p>
     </div>
   </div>
+
+  <JnlHistoryDialog 
+    v-if="formData && formData.menuLevel === 9"
+    v-model="jnlDialogVisible" 
+    :tr-code="formData.trCode" 
+    :cust-no="globalCustNo" 
+    :channel-no="formData.menuScope"
+  />
 </template>
 
 <script setup>
@@ -380,6 +431,8 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { updateMenu, updateMenuCode } from '../api/menu.js'
+import { checkJnlSuccess } from '../api/jnl.js'
+import JnlHistoryDialog from './JnlHistoryDialog.vue'
 
 const props = defineProps({
   /** 选中的菜单数据 */
@@ -396,6 +449,11 @@ const props = defineProps({
   tempTableName: {
     type: String,
     default: ''
+  },
+  /** 全局输入的客户号 */
+  globalCustNo: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -406,10 +464,39 @@ const formData = ref(null)
 const formRef = ref(null)
 const saving = ref(false)
 const updatingCode = ref(false)
+const jnlDialogVisible = ref(false)
+
+const isSuccessCalled = ref(false)
+const checkingSuccess = ref(false)
 
 // 菜单编码编辑（单独管理，因修改编码是独立操作）
 const editMenuCode = ref('')
 const originalMenuCode = ref('')
+
+// 统计子接口变量
+const totalInterfaces = ref(0)
+const interfaceTrCodes = ref([])
+const checkingAll = ref(false)
+const hasCheckedAll = ref(false)
+const successInterfacesCount = ref(0)
+
+// 递归收集子接口及 trCode
+function collectInterfaces(node, trCodes) {
+  if (!node) return 0
+  let count = 0
+  if (node.menuLevel === 9) {
+    count = 1
+    if (node.trCode) {
+      trCodes.push(node.trCode)
+    }
+  }
+  if (node.children && node.children.length > 0) {
+    for (const child of node.children) {
+      count += collectInterfaces(child, trCodes)
+    }
+  }
+  return count
+}
 
 // 折叠面板默认展开项
 const activeCollapse = ref(['basic', 'type'])
@@ -435,12 +522,28 @@ const menuTypeOptions = [
 watch(
   () => props.modelValue,
   (newVal) => {
+    hasCheckedAll.value = false
+    successInterfacesCount.value = 0
+    totalInterfaces.value = 0
+    interfaceTrCodes.value = []
+
     if (newVal) {
+      // 收集并统计非接口菜单的下属接口
+      if (newVal.menuLevel !== 9) {
+        const trCodes = []
+        totalInterfaces.value = collectInterfaces(newVal, trCodes)
+        interfaceTrCodes.value = trCodes
+      }
+
       // 深拷贝，不包含 children
       const { children, ...data } = newVal
       formData.value = { ...data }
       editMenuCode.value = data.menuCode
       originalMenuCode.value = data.menuCode
+
+      if (data.menuLevel === 9) {
+        doCheckSuccess(data.trCode)
+      }
     } else {
       formData.value = null
       editMenuCode.value = ''
@@ -449,6 +552,71 @@ watch(
   },
   { immediate: true, deep: true }
 )
+
+watch(
+  () => props.globalCustNo,
+  (newVal) => {
+    if (props.modelValue && props.modelValue.menuLevel === 9) {
+      doCheckSuccess(props.modelValue.trCode)
+    }
+  },
+  { deep: true }
+)
+
+async function doCheckSuccess(trCode) {
+  if (!trCode || !props.globalCustNo || props.globalCustNo.length === 0) {
+    isSuccessCalled.value = false
+    return
+  }
+  checkingSuccess.value = true
+  try {
+    const res = await checkJnlSuccess(trCode, props.globalCustNo, props.modelValue?.menuScope)
+    if (res.code === 200) {
+      isSuccessCalled.value = res.data
+    } else {
+      isSuccessCalled.value = false
+    }
+  } catch (error) {
+    console.error('校验状态失败', error)
+    isSuccessCalled.value = false
+  } finally {
+    checkingSuccess.value = false
+  }
+}
+
+/**
+ * 并发检查该菜单下属的所有接口是否被成功调用
+ */
+async function checkAllInterfaces() {
+  if (!props.globalCustNo || props.globalCustNo.length === 0) {
+    ElMessage.warning('请先在顶部添加客户号')
+    return
+  }
+  
+  if (interfaceTrCodes.value.length === 0) {
+    ElMessage.info(`该菜单下属共有 ${totalInterfaces.value} 个接口，但都没有配置服务码(TR_CODE)`)
+    return
+  }
+
+  checkingAll.value = true
+  try {
+    // 复用校验单个接口成功的逻辑，并发发起所有 TR_CODE 校验
+    const promises = interfaceTrCodes.value.map(trCode => 
+      checkJnlSuccess(trCode, props.globalCustNo, props.modelValue?.menuScope)
+        .catch(() => ({ code: 500, data: false })) // 忽略单个接口报错
+    )
+    
+    const results = await Promise.all(promises)
+    const successCount = results.filter(res => res.code === 200 && res.data === true).length
+    
+    successInterfacesCount.value = successCount
+    hasCheckedAll.value = true
+  } catch (error) {
+    ElMessage.error('统计接口调用情况异常')
+  } finally {
+    checkingAll.value = false
+  }
+}
 
 /**
  * 重置表单

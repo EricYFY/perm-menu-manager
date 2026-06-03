@@ -43,4 +43,11 @@
         LIMIT 1
     </select>
 
+    <!-- 查询是否有比当前锁更新的锁记录 -->
+    <select id="countNewerLocks" resultType="int">
+        SELECT COUNT(*)
+        FROM perm_menu_edit_lock
+        WHERE ID > #{lockId}
+    </select>
+
 </mapper>
