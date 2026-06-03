@@ -24,7 +24,7 @@ request.interceptors.response.use(
  * @param {string} tempTableName - 临时表名
  * @param {string} subsystemCode - 子系统编码
  */
-export function getMenuTree(menuScope, tenantId = '047', tempTableName = '', subsystemCode = 'ITS_PORTAL') {
+export function getMenuTree(menuScope, tenantId = '047', tempTableName = '', subsystemCode = '') {
   return request({
     url: '/menu/tree',
     method: 'get',

@@ -48,7 +48,7 @@ public class EditSessionController {
     public ResultVO<Map<String, String>> unlockSession(@RequestBody Map<String, String> request) {
         try {
             String lockedBy = request.get("lockedBy");
-            String subsystemCode = request.getOrDefault("subsystemCode", "ITS_PORTAL");
+            String subsystemCode = request.get("subsystemCode");
             if (lockedBy == null || lockedBy.trim().isEmpty()) {
                 return ResultVO.error("缺少 lockedBy 参数");
             }

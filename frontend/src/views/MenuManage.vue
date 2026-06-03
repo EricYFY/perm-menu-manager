@@ -134,6 +134,40 @@
       </el-row>
     </div>
 
+    <!-- 用户功能手册 -->
+    <div class="manual-container animate-fade-in" style="animation-delay: 0.2s; margin-top: 16px; flex-shrink: 0;">
+      <el-collapse>
+        <el-collapse-item name="1">
+          <template #title>
+            <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; color: var(--text-primary); padding-left: 8px;">
+              <el-icon><Reading /></el-icon>
+              权限菜单管理系统 - 快速使用手册
+            </div>
+          </template>
+          <div class="manual-content">
+            <el-descriptions :column="1" border size="small">
+              <el-descriptions-item label="🔍 浏览与搜索">
+                可在上方切换【PC端】与【APP端】菜单。如果不输入“子系统”，将展示全量菜单；输入对应编码即可过滤查看。
+              </el-descriptions-item>
+              <el-descriptions-item label="📝 菜单编辑机制">
+                系统采用安全编辑模式。点击右上角【解锁编辑】后，您可以自由地进行修改。修改完毕后，请务必点击【保存并执行】使之生效。
+                <br />
+                <span style="color: var(--warning-color); font-size: 12px; margin-top: 4px; display: inline-block;">
+                  注：为避免影响他人，如果超过 2 小时未保存，您的编辑状态可能会失效，未保存的内容将被清除。
+                </span>
+              </el-descriptions-item>
+              <el-descriptions-item label="🖱️ 节点操作与拖拽">
+                在左侧菜单树中，您可以<strong>直接拖拽</strong>调整菜单的位置和层级。点击选中某个菜单后，右侧可修改其详细属性，或进行删除、新增子菜单等操作。修改父级菜单编码时，所有子菜单会自动更新关联。
+              </el-descriptions-item>
+              <el-descriptions-item label="📊 接口调用与统计">
+                对于接口菜单，可以一键查看其调用情况和历史流水。对于普通菜单，在右侧详情中点击【统计接口调用情况】，可一次性统计其下方有多少个接口，以及有多少个已经成功调用过。
+              </el-descriptions-item>
+            </el-descriptions>
+          </div>
+        </el-collapse-item>
+      </el-collapse>
+    </div>
+
     <!-- SQL预览确认弹窗 -->
     <SqlPreviewDialog
       v-model="previewDialogVisible"
@@ -146,7 +180,7 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
-import { Grid, Monitor, Iphone, List, Plus, Unlock, Check } from '@element-plus/icons-vue'
+import { Grid, Monitor, Iphone, List, Plus, Unlock, Check, Reading } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import MenuTree from '../components/MenuTree.vue'
 import MenuDetailForm from '../components/MenuDetailForm.vue'
@@ -483,5 +517,29 @@ function handleRefresh() {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+/* 手册样式 */
+.manual-container {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.manual-content {
+  padding: 0 16px 16px 16px;
+}
+
+:deep(.el-collapse-item__header) {
+  border-bottom: none;
+}
+
+:deep(.el-descriptions__label) {
+  width: 150px;
+  background-color: #f9fafc;
+  color: var(--text-regular);
+  font-weight: 600;
 }
 </style>

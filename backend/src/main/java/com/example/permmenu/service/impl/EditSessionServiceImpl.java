@@ -38,9 +38,44 @@ public class EditSessionServiceImpl implements EditSessionService {
         return null;
     }
 
+    /**
+     * 校验输入是否只包含合法字符（字母、数字、下划线），防止 SQL 注入
+     */
+    private void validateIdentifier(String input, String fieldName) {
+        if (input != null && !input.isEmpty() && !input.matches("^[A-Za-z0-9_]+$")) {
+            throw new IllegalArgumentException(fieldName + " 包含非法字符，仅允许字母、数字和下划线");
+        }
+    }
+
+    /**
+     * 校验临时表名格式是否合法
+     */
+    private void validateTempTableName(String tempTableName) {
+        if (tempTableName == null || !tempTableName.matches("^perm_menu_\\d+$")) {
+            throw new IllegalArgumentException("临时表名格式非法，应为 perm_menu_ 加时间戳");
+        }
+    }
+
+    /**
+     * 校验当前锁是否被后续用户挤占（软保护超时后被他人解锁）
+     */
+    private void checkNotEvicted(String tempTableName) {
+        EditLock lock = editLockMapper.selectByTempTable(tempTableName);
+        if (lock != null) {
+            int newerLocks = editLockMapper.countNewerLocks(lock.getId());
+            if (newerLocks > 0) {
+                dropTempTable(tempTableName);
+                throw new RuntimeException("由于您操作时间过长，且期间已有新用户解锁过系统，您此次的编辑已无效被强制废弃，请重新刷新页面再试！");
+            }
+        }
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String unlockSession(String lockedBy, String subsystemCode) {
+        // 0. 校验输入合法性，防止 SQL 注入
+        validateIdentifier(subsystemCode, "子系统编码");
+
         // 1. 校验是否有活跃锁
         EditLock activeLock = getActiveLock();
         if (activeLock != null) {
@@ -75,15 +110,20 @@ public class EditSessionServiceImpl implements EditSessionService {
 
     @Override
     public List<String> getSqlLog(String tempTableName) {
+        validateTempTableName(tempTableName);
+
         // 校验是否有被挤占的情况
-        EditLock lock = editLockMapper.selectByTempTable(tempTableName);
-        if (lock != null) {
-            int newerLocks = editLockMapper.countNewerLocks(lock.getId());
-            if (newerLocks > 0) {
+        checkNotEvicted(tempTableName);
+
+        // 短期方案：如果内存中没有日志（服务可能重启过），但锁和临时表仍然存在，提示用户
+        if (!sqlLogs.containsKey(tempTableName)) {
+            EditLock lock = editLockMapper.selectByTempTable(tempTableName);
+            if (lock != null && "LOCKED".equals(lock.getStatus())) {
                 dropTempTable(tempTableName);
-                throw new RuntimeException("由于您操作时间过长，且期间已有新用户解锁过系统，您此次的编辑已无效被强制废弃，请重新刷新页面再试！");
+                throw new RuntimeException("后端服务曾经重启过，您此次编辑的操作记录已丢失，临时表已被自动清理。请刷新页面重新编辑！");
             }
         }
+
         return sqlLogs.getOrDefault(tempTableName, Collections.emptyList());
     }
 
@@ -95,6 +135,8 @@ public class EditSessionServiceImpl implements EditSessionService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> commitSession(String tempTableName) {
+        validateTempTableName(tempTableName);
+
         // 1. 校验锁状态
         EditLock lock = editLockMapper.selectByTempTable(tempTableName);
         if (lock == null || !"LOCKED".equals(lock.getStatus())) {
@@ -102,13 +144,10 @@ public class EditSessionServiceImpl implements EditSessionService {
         }
 
         // 2. 校验是否有被挤占的情况（超时后被别人解锁）
-        int newerLocks = editLockMapper.countNewerLocks(lock.getId());
-        if (newerLocks > 0) {
-            dropTempTable(tempTableName);
-            throw new RuntimeException("由于您操作时间过长，且期间已有新用户解锁过系统，您此次的编辑已无效被强制废弃，请重新刷新页面再试！");
-        }
+        checkNotEvicted(tempTableName);
 
-        List<String> logs = getSqlLog(tempTableName);
+        // 3. 直接从内存获取日志（避免 getSqlLog 重复校验）
+        List<String> logs = sqlLogs.getOrDefault(tempTableName, Collections.emptyList());
         int successCount = 0;
 
         // 2. 回放 SQL 到正式表
@@ -172,6 +211,7 @@ public class EditSessionServiceImpl implements EditSessionService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void dropTempTable(String tempTableName) {
+        validateTempTableName(tempTableName);
         String dropTableSql = "DROP TABLE IF EXISTS " + tempTableName;
         jdbcTemplate.execute(dropTableSql);
         editLockMapper.releaseLock(tempTableName);

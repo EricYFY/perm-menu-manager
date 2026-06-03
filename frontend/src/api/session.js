@@ -29,7 +29,7 @@ export function getSessionStatus() {
  * @param {string} lockedBy - 锁定人唯一标识
  * @param {string} subsystemCode - 子系统编码过滤
  */
-export function unlockSession(lockedBy, subsystemCode = 'ITS_PORTAL') {
+export function unlockSession(lockedBy, subsystemCode = '') {
   return request({
     url: '/session/unlock',
     method: 'post',
