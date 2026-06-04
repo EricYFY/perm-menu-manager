@@ -14,7 +14,7 @@ import java.util.Map;
  * 编辑会话管理控制器
  */
 @RestController
-@RequestMapping("/api/session")
+@RequestMapping("/session")
 @RequiredArgsConstructor
 public class EditSessionController {
 

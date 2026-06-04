@@ -12,7 +12,7 @@ import java.util.List;
  * 菜单管理控制器
  */
 @RestController
-@RequestMapping("/api/menu")
+@RequestMapping("/menu")
 @RequiredArgsConstructor
 public class MenuController {
 

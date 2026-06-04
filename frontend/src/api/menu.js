@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // 创建 Axios 实例
 const request = axios.create({
-  baseURL: '/api',
+  baseURL: '/perm-menu-manager/api',
   timeout: 15000
 })
 

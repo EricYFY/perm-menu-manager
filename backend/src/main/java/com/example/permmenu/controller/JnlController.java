@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/jnl")
+@RequestMapping("/jnl")
 @RequiredArgsConstructor
 public class JnlController {
 
