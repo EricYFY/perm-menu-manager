@@ -16,8 +16,8 @@ public class CorsConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        // 允许前端开发服务器地址
-        config.addAllowedOrigin("http://localhost:5173");
+        // 允许任意地址（适配生产环境 Nginx 代理）
+        config.addAllowedOriginPattern("*");
         // 允许所有请求头
         config.addAllowedHeader("*");
         // 允许所有请求方法
