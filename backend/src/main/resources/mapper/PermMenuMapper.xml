@@ -18,7 +18,6 @@
         <result column="MENU_VERIFY" property="menuVerify"/>
         <result column="MENU_DISPLAY" property="menuDisplay"/>
         <result column="TR_CODE" property="trCode"/>
-        <result column="SECURITY_TR_CODE" property="securityTrCode"/>
         <result column="CTRL_ATTI" property="ctrlAtti"/>
         <result column="BIZ_ATTI" property="bizAtti"/>
         <result column="ACCT_AUTH_ATTI" property="acctAuthAtti"/>
@@ -49,7 +48,7 @@
     <sql id="allColumns">
         TENANT_ID, STAT, MENU_SCOPE, MENU_CODE, MENU_NAME, MENU_LEVEL, MENU_TYPE,
         UPP_MENU_CODE, MENU_CHECKED, MENU_KIND, MENU_VERIFY, MENU_DISPLAY,
-        TR_CODE, SECURITY_TR_CODE, CTRL_ATTI, BIZ_ATTI, ACCT_AUTH_ATTI, ASAC_AUTH_ATTI,
+        TR_CODE, CTRL_ATTI, BIZ_ATTI, ACCT_AUTH_ATTI, ASAC_AUTH_ATTI,
         TIME_ATTI, WORKFLOW_FLAG, WORKFLOW_BIZ_TYPE, IS_ADMIN, IS_OPERATOR, IS_USER,
         SORT_NO, SUBSYSTEM_CODE, FOLDER_CODE, BIZ_CATEGORY_NO, BIZ_CATEGORY_NAME,
         MENU_ICON, MENU_HERF_TYPE, MENU_HERF, MENU_ATTRIBUTE, ICON_FLAG, IS_KEEP_ALIVE,
@@ -116,7 +115,7 @@
             SELECT m.TENANT_ID, m.STAT, m.MENU_SCOPE, m.MENU_CODE, m.MENU_NAME,
                    m.MENU_LEVEL, m.MENU_TYPE, m.UPP_MENU_CODE, m.MENU_CHECKED,
                    m.MENU_KIND, m.MENU_VERIFY, m.MENU_DISPLAY, m.TR_CODE,
-                   m.SECURITY_TR_CODE, m.CTRL_ATTI, m.BIZ_ATTI, m.ACCT_AUTH_ATTI,
+                   m.CTRL_ATTI, m.BIZ_ATTI, m.ACCT_AUTH_ATTI,
                    m.ASAC_AUTH_ATTI, m.TIME_ATTI, m.WORKFLOW_FLAG, m.WORKFLOW_BIZ_TYPE,
                    m.IS_ADMIN, m.IS_OPERATOR, m.IS_USER, m.SORT_NO, m.SUBSYSTEM_CODE,
                    m.FOLDER_CODE, m.BIZ_CATEGORY_NO, m.BIZ_CATEGORY_NAME, m.MENU_ICON,
@@ -135,7 +134,7 @@
         INSERT INTO ${tableName} (
             TENANT_ID, STAT, MENU_SCOPE, MENU_CODE, MENU_NAME, MENU_LEVEL, MENU_TYPE,
             UPP_MENU_CODE, MENU_CHECKED, MENU_KIND, MENU_VERIFY, MENU_DISPLAY,
-            TR_CODE, SECURITY_TR_CODE, CTRL_ATTI, BIZ_ATTI, ACCT_AUTH_ATTI, ASAC_AUTH_ATTI,
+            TR_CODE, CTRL_ATTI, BIZ_ATTI, ACCT_AUTH_ATTI, ASAC_AUTH_ATTI,
             TIME_ATTI, WORKFLOW_FLAG, WORKFLOW_BIZ_TYPE, IS_ADMIN, IS_OPERATOR, IS_USER,
             SORT_NO, SUBSYSTEM_CODE, FOLDER_CODE, BIZ_CATEGORY_NO, BIZ_CATEGORY_NAME,
             MENU_ICON, MENU_HERF_TYPE, MENU_HERF, MENU_ATTRIBUTE, ICON_FLAG, IS_KEEP_ALIVE,
@@ -144,7 +143,7 @@
             #{menu.tenantId}, #{menu.stat}, #{menu.menuScope}, #{menu.menuCode},
             #{menu.menuName}, #{menu.menuLevel}, #{menu.menuType}, #{menu.uppMenuCode},
             #{menu.menuChecked}, #{menu.menuKind}, #{menu.menuVerify}, #{menu.menuDisplay},
-            #{menu.trCode}, #{menu.securityTrCode}, #{menu.ctrlAtti}, #{menu.bizAtti},
+            #{menu.trCode}, #{menu.ctrlAtti}, #{menu.bizAtti},
             #{menu.acctAuthAtti}, #{menu.asacAuthAtti}, #{menu.timeAtti}, #{menu.workflowFlag},
             #{menu.workflowBizType}, #{menu.isAdmin}, #{menu.isOperator}, #{menu.isUser},
             #{menu.sortNo}, #{menu.subsystemCode}, #{menu.folderCode}, #{menu.bizCategoryNo},
@@ -166,7 +165,6 @@
             MENU_VERIFY = #{menu.menuVerify},
             MENU_DISPLAY = #{menu.menuDisplay},
             TR_CODE = #{menu.trCode},
-            SECURITY_TR_CODE = #{menu.securityTrCode},
             CTRL_ATTI = #{menu.ctrlAtti},
             BIZ_ATTI = #{menu.bizAtti},
             ACCT_AUTH_ATTI = #{menu.acctAuthAtti},

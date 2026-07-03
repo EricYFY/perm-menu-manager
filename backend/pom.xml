@@ -36,6 +36,13 @@
             <version>${mybatis-plus.version}</version>
         </dependency>
 
+        <!-- Dynamic Datasource -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+
         <!-- MySQL 驱动（兼容 OceanBase） -->
         <dependency>
             <groupId>com.mysql</groupId>

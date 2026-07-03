@@ -6,6 +6,15 @@ const request = axios.create({
   timeout: 15000
 })
 
+// 请求拦截器
+request.interceptors.request.use(config => {
+  const envId = localStorage.getItem('X-Env-ID')
+  if (envId) {
+    config.headers['X-Env-ID'] = envId
+  }
+  return config
+})
+
 // 响应拦截器
 request.interceptors.response.use(
   (response) => {
