@@ -3,6 +3,8 @@ import Home from '../views/Home.vue'
 import MenuManage from '../views/MenuManage.vue'
 import RoleButtonManage from '../views/RoleButtonManage.vue'
 import FlowUmpConfig from '../views/FlowUmpConfig.vue'
+import DictManage from '../views/DictManage.vue'
+import TrxConfigManage from '../views/TrxConfigManage.vue'
 
 const routes = [
   {
@@ -24,6 +26,16 @@ const routes = [
     path: '/flow-ump',
     name: 'FlowUmpConfig',
     component: FlowUmpConfig
+  },
+  {
+    path: '/dict',
+    name: 'DictManage',
+    component: DictManage
+  },
+  {
+    path: '/trx-config',
+    name: 'TrxConfigManage',
+    component: TrxConfigManage
   }
 ]
 

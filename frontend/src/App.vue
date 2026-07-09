@@ -14,6 +14,12 @@
         <el-menu-item index="/flow-ump">
           <el-icon><Connection /></el-icon> 总线视角扭转管理
         </el-menu-item>
+        <el-menu-item index="/dict">
+          <el-icon><Collection /></el-icon> 字典管理
+        </el-menu-item>
+        <el-menu-item index="/trx-config">
+          <el-icon><Setting /></el-icon> 接口关键字段配置
+        </el-menu-item>
       </el-menu>
       
       <!-- 右侧环境切换区域 -->
@@ -36,7 +42,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { House, Menu, User, Connection } from '@element-plus/icons-vue'
+import { House, Menu, User, Connection, Collection, Setting } from '@element-plus/icons-vue'
 import EnvManagerDialog from './components/EnvManagerDialog.vue'
 
 const envManagerRef = ref(null)

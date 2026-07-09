@@ -71,19 +71,35 @@
     <!-- 页签切换 -->
     <div class="tabs-container animate-fade-in" style="animation-delay: 0.1s;">
       <el-tabs v-model="activeTab" @tab-change="handleTabChange">
-        <el-tab-pane name="11">
+        <el-tab-pane name="pc">
           <template #label>
             <div class="tab-label">
               <el-icon><Monitor /></el-icon>
               <span>PC端菜单</span>
+              <el-input 
+                v-model="pcScope" 
+                size="small" 
+                @click.stop 
+                @change="handleRefresh" 
+                style="width: 70px; margin-left: 8px" 
+                placeholder="Scope" 
+              />
             </div>
           </template>
         </el-tab-pane>
-        <el-tab-pane name="12">
+        <el-tab-pane name="app">
           <template #label>
             <div class="tab-label">
               <el-icon><Iphone /></el-icon>
               <span>APP端菜单</span>
+              <el-input 
+                v-model="appScope" 
+                size="small" 
+                @click.stop 
+                @change="handleRefresh" 
+                style="width: 70px; margin-left: 8px" 
+                placeholder="Scope" 
+              />
             </div>
           </template>
         </el-tab-pane>
@@ -109,7 +125,7 @@
             <div class="panel-body">
               <MenuTree
                 ref="menuTreeRef"
-                :menu-scope="activeTab"
+                :menu-scope="currentScope"
                 :is-locked="isLocked"
                 :temp-table-name="tempTableName"
                 :subsystem-code="subsystemCode"
@@ -179,7 +195,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { Grid, Monitor, Iphone, List, Plus, Unlock, Check, Reading } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import MenuTree from '../components/MenuTree.vue'
@@ -187,8 +203,12 @@ import MenuDetailForm from '../components/MenuDetailForm.vue'
 import SqlPreviewDialog from '../components/SqlPreviewDialog.vue'
 import { getSessionStatus, unlockSession, cancelSession, getSqlLog } from '../api/session.js'
 
-// 当前页签：11=PC端, 12=APP端
-const activeTab = ref('11')
+// 当前页签
+const activeTab = ref('pc')
+const pcScope = ref('11')
+const appScope = ref('12')
+
+const currentScope = computed(() => activeTab.value === 'pc' ? pcScope.value : appScope.value)
 
 // 选中的菜单数据
 const selectedMenu = ref(null)

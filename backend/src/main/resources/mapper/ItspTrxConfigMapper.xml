@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.permmenu.mapper.ItspTrxConfigMapper">
+
+    <update id="updateByKeys">
+        UPDATE itsp_trx_config
+        <set>
+            <if test="config.productCode != null">PRODUCT_CODE = #{config.productCode},</if>
+            <if test="config.productName != null">PRODUCT_NAME = #{config.productName},</if>
+            <if test="config.busiType != null">BUSI_TYPE = #{config.busiType},</if>
+            <if test="config.busiName != null">BUSI_NAME = #{config.busiName},</if>
+            <if test="config.trName != null">TR_NAME = #{config.trName},</if>
+            <if test="config.trCcyFld != null">TR_CCY_FLD = #{config.trCcyFld},</if>
+            <if test="config.trAmtFld != null">TR_AMT_FLD = #{config.trAmtFld},</if>
+            <if test="config.trRefFld != null">TR_REF_FLD = #{config.trRefFld},</if>
+            <if test="config.trCustNameFld != null">TR_CUST_NAME_FLD = #{config.trCustNameFld},</if>
+            <if test="config.trCustAcctFld != null">TR_CUST_ACCT_FLD = #{config.trCustAcctFld},</if>
+            <if test="config.trBicFld != null">TR_BIC_FLD = #{config.trBicFld},</if>
+            <if test="config.custAcctFld != null">CUST_ACCT_FLD = #{config.custAcctFld},</if>
+            <if test="config.imageNoFld != null">IMAGE_NO_FLD = #{config.imageNoFld},</if>
+            <if test="config.signIdFld != null">SIGN_ID_FLD = #{config.signIdFld},</if>
+            <if test="config.featureFld != null">FEATURE_FLD = #{config.featureFld},</if>
+            <if test="config.conditionExprFld != null">CONDITION_EXPR_FLD = #{config.conditionExprFld},</if>
+        </set>
+        WHERE TR_CODE = #{config.trCode} AND LANGUAGE = #{config.language}
+    </update>
+
+    <delete id="deleteByKeys">
+        DELETE FROM itsp_trx_config
+        WHERE TR_CODE = #{trCode} AND LANGUAGE = #{language}
+    </delete>
+
+</mapper>

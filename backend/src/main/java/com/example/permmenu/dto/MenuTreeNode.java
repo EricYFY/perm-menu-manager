@@ -54,6 +54,7 @@ public class MenuTreeNode {
     /** 安全验证判断服务码 */
     private String securityTrCode;
 
+
     /** 服务控制属性 */
     private String ctrlAtti;
 

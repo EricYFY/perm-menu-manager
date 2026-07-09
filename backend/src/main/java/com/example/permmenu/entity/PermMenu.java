@@ -69,6 +69,10 @@ public class PermMenu implements Serializable {
     @TableField("TR_CODE")
     private String trCode;
 
+    /** 安全验证判断服务码 */
+    @TableField("SECURITY_TR_CODE")
+    private String securityTrCode;
+
 
     /** 服务控制属性 */
     @TableField("CTRL_ATTI")

@@ -18,6 +18,7 @@
         <result column="MENU_VERIFY" property="menuVerify"/>
         <result column="MENU_DISPLAY" property="menuDisplay"/>
         <result column="TR_CODE" property="trCode"/>
+        <result column="SECURITY_TR_CODE" property="securityTrCode"/>
         <result column="CTRL_ATTI" property="ctrlAtti"/>
         <result column="BIZ_ATTI" property="bizAtti"/>
         <result column="ACCT_AUTH_ATTI" property="acctAuthAtti"/>
@@ -46,13 +47,30 @@
 
     <!-- 所有列名 -->
     <sql id="allColumns">
-        TENANT_ID, STAT, MENU_SCOPE, MENU_CODE, MENU_NAME, MENU_LEVEL, MENU_TYPE,
-        UPP_MENU_CODE, MENU_CHECKED, MENU_KIND, MENU_VERIFY, MENU_DISPLAY,
-        TR_CODE, CTRL_ATTI, BIZ_ATTI, ACCT_AUTH_ATTI, ASAC_AUTH_ATTI,
-        TIME_ATTI, WORKFLOW_FLAG, WORKFLOW_BIZ_TYPE, IS_ADMIN, IS_OPERATOR, IS_USER,
-        SORT_NO, SUBSYSTEM_CODE, FOLDER_CODE, BIZ_CATEGORY_NO, BIZ_CATEGORY_NAME,
-        MENU_ICON, MENU_HERF_TYPE, MENU_HERF, MENU_ATTRIBUTE, ICON_FLAG, IS_KEEP_ALIVE,
-        JUMP_HERF, TB_VERSION, DESCRIPTION
+        <trim suffixOverrides=",">
+            TENANT_ID, STAT, MENU_SCOPE, MENU_CODE, MENU_NAME, MENU_LEVEL, MENU_TYPE,
+            UPP_MENU_CODE, MENU_CHECKED, MENU_KIND, MENU_VERIFY, MENU_DISPLAY,
+            TR_CODE, 
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'SECURITY_TR_CODE')">SECURITY_TR_CODE,</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'CTRL_ATTI')">CTRL_ATTI,</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_ATTI')">BIZ_ATTI,</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'ACCT_AUTH_ATTI')">ACCT_AUTH_ATTI,</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'ASAC_AUTH_ATTI')">ASAC_AUTH_ATTI,</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'TIME_ATTI')">TIME_ATTI,</if>
+            WORKFLOW_FLAG,
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'WORKFLOW_BIZ_TYPE')">WORKFLOW_BIZ_TYPE,</if>
+            IS_ADMIN, IS_OPERATOR,
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'IS_USER')">IS_USER,</if>
+            SORT_NO, SUBSYSTEM_CODE, FOLDER_CODE,
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_CATEGORY_NO')">BIZ_CATEGORY_NO,</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_CATEGORY_NAME')">BIZ_CATEGORY_NAME,</if>
+            MENU_ICON,
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'MENU_HERF_TYPE')">MENU_HERF_TYPE,</if>
+            MENU_HERF, MENU_ATTRIBUTE, ICON_FLAG, IS_KEEP_ALIVE,
+            JUMP_HERF,
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'TB_VERSION')">TB_VERSION,</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'DESCRIPTION')">DESCRIPTION,</if>
+        </trim>
     </sql>
 
     <!-- 查询指定渠道的所有菜单 -->
@@ -112,15 +130,32 @@
               AND MENU_SCOPE = #{menuScope}
               AND TENANT_ID = #{tenantId}
             UNION ALL
-            SELECT m.TENANT_ID, m.STAT, m.MENU_SCOPE, m.MENU_CODE, m.MENU_NAME,
+            SELECT 
+                <trim suffixOverrides=",">
+                   m.TENANT_ID, m.STAT, m.MENU_SCOPE, m.MENU_CODE, m.MENU_NAME,
                    m.MENU_LEVEL, m.MENU_TYPE, m.UPP_MENU_CODE, m.MENU_CHECKED,
                    m.MENU_KIND, m.MENU_VERIFY, m.MENU_DISPLAY, m.TR_CODE,
-                   m.CTRL_ATTI, m.BIZ_ATTI, m.ACCT_AUTH_ATTI,
-                   m.ASAC_AUTH_ATTI, m.TIME_ATTI, m.WORKFLOW_FLAG, m.WORKFLOW_BIZ_TYPE,
-                   m.IS_ADMIN, m.IS_OPERATOR, m.IS_USER, m.SORT_NO, m.SUBSYSTEM_CODE,
-                   m.FOLDER_CODE, m.BIZ_CATEGORY_NO, m.BIZ_CATEGORY_NAME, m.MENU_ICON,
-                   m.MENU_HERF_TYPE, m.MENU_HERF, m.MENU_ATTRIBUTE, m.ICON_FLAG,
-                   m.IS_KEEP_ALIVE, m.JUMP_HERF, m.TB_VERSION, m.DESCRIPTION
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'SECURITY_TR_CODE')">m.SECURITY_TR_CODE,</if>
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'CTRL_ATTI')">m.CTRL_ATTI,</if>
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_ATTI')">m.BIZ_ATTI,</if>
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'ACCT_AUTH_ATTI')">m.ACCT_AUTH_ATTI,</if>
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'ASAC_AUTH_ATTI')">m.ASAC_AUTH_ATTI,</if>
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'TIME_ATTI')">m.TIME_ATTI,</if>
+                   m.WORKFLOW_FLAG,
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'WORKFLOW_BIZ_TYPE')">m.WORKFLOW_BIZ_TYPE,</if>
+                   m.IS_ADMIN, m.IS_OPERATOR,
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'IS_USER')">m.IS_USER,</if>
+                   m.SORT_NO, m.SUBSYSTEM_CODE,
+                   m.FOLDER_CODE,
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_CATEGORY_NO')">m.BIZ_CATEGORY_NO,</if>
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_CATEGORY_NAME')">m.BIZ_CATEGORY_NAME,</if>
+                   m.MENU_ICON,
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'MENU_HERF_TYPE')">m.MENU_HERF_TYPE,</if>
+                   m.MENU_HERF, m.MENU_ATTRIBUTE, m.ICON_FLAG,
+                   m.IS_KEEP_ALIVE, m.JUMP_HERF,
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'TB_VERSION')">m.TB_VERSION,</if>
+                   <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'DESCRIPTION')">m.DESCRIPTION,</if>
+                </trim>
             FROM ${tableName} m
             INNER JOIN descendants d ON m.UPP_MENU_CODE = d.MENU_CODE
                 AND m.MENU_SCOPE = d.MENU_SCOPE
@@ -132,31 +167,64 @@
     <!-- 插入菜单记录 -->
     <insert id="insertMenu">
         INSERT INTO ${tableName} (
-            TENANT_ID, STAT, MENU_SCOPE, MENU_CODE, MENU_NAME, MENU_LEVEL, MENU_TYPE,
-            UPP_MENU_CODE, MENU_CHECKED, MENU_KIND, MENU_VERIFY, MENU_DISPLAY,
-            TR_CODE, CTRL_ATTI, BIZ_ATTI, ACCT_AUTH_ATTI, ASAC_AUTH_ATTI,
-            TIME_ATTI, WORKFLOW_FLAG, WORKFLOW_BIZ_TYPE, IS_ADMIN, IS_OPERATOR, IS_USER,
-            SORT_NO, SUBSYSTEM_CODE, FOLDER_CODE, BIZ_CATEGORY_NO, BIZ_CATEGORY_NAME,
-            MENU_ICON, MENU_HERF_TYPE, MENU_HERF, MENU_ATTRIBUTE, ICON_FLAG, IS_KEEP_ALIVE,
-            JUMP_HERF, TB_VERSION, DESCRIPTION
+            <trim suffixOverrides=",">
+                TENANT_ID, STAT, MENU_SCOPE, MENU_CODE, MENU_NAME, MENU_LEVEL, MENU_TYPE,
+                UPP_MENU_CODE, MENU_CHECKED, MENU_KIND, MENU_VERIFY, MENU_DISPLAY,
+                TR_CODE, 
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'SECURITY_TR_CODE')">SECURITY_TR_CODE,</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'CTRL_ATTI')">CTRL_ATTI,</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_ATTI')">BIZ_ATTI,</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'ACCT_AUTH_ATTI')">ACCT_AUTH_ATTI,</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'ASAC_AUTH_ATTI')">ASAC_AUTH_ATTI,</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'TIME_ATTI')">TIME_ATTI,</if>
+                WORKFLOW_FLAG,
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'WORKFLOW_BIZ_TYPE')">WORKFLOW_BIZ_TYPE,</if>
+                IS_ADMIN, IS_OPERATOR,
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'IS_USER')">IS_USER,</if>
+                SORT_NO, SUBSYSTEM_CODE, FOLDER_CODE,
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_CATEGORY_NO')">BIZ_CATEGORY_NO,</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_CATEGORY_NAME')">BIZ_CATEGORY_NAME,</if>
+                MENU_ICON,
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'MENU_HERF_TYPE')">MENU_HERF_TYPE,</if>
+                MENU_HERF, MENU_ATTRIBUTE, ICON_FLAG, IS_KEEP_ALIVE,
+                JUMP_HERF,
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'TB_VERSION')">TB_VERSION,</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'DESCRIPTION')">DESCRIPTION,</if>  
+            </trim>
         ) VALUES (
-            #{menu.tenantId}, #{menu.stat}, #{menu.menuScope}, #{menu.menuCode},
-            #{menu.menuName}, #{menu.menuLevel}, #{menu.menuType}, #{menu.uppMenuCode},
-            #{menu.menuChecked}, #{menu.menuKind}, #{menu.menuVerify}, #{menu.menuDisplay},
-            #{menu.trCode}, #{menu.ctrlAtti}, #{menu.bizAtti},
-            #{menu.acctAuthAtti}, #{menu.asacAuthAtti}, #{menu.timeAtti}, #{menu.workflowFlag},
-            #{menu.workflowBizType}, #{menu.isAdmin}, #{menu.isOperator}, #{menu.isUser},
-            #{menu.sortNo}, #{menu.subsystemCode}, #{menu.folderCode}, #{menu.bizCategoryNo},
-            #{menu.bizCategoryName}, #{menu.menuIcon}, #{menu.menuHerfType}, #{menu.menuHerf},
-            #{menu.menuAttribute}, #{menu.iconFlag}, #{menu.isKeepAlive}, #{menu.jumpHerf},
-            #{menu.tbVersion}, #{menu.description}
+            <trim suffixOverrides=",">
+                #{menu.tenantId}, #{menu.stat}, #{menu.menuScope}, #{menu.menuCode},
+                #{menu.menuName}, #{menu.menuLevel}, #{menu.menuType}, #{menu.uppMenuCode},
+                #{menu.menuChecked}, #{menu.menuKind}, #{menu.menuVerify}, #{menu.menuDisplay},
+                #{menu.trCode}, 
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'SECURITY_TR_CODE')">#{menu.securityTrCode},</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'CTRL_ATTI')">#{menu.ctrlAtti},</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_ATTI')">#{menu.bizAtti},</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'ACCT_AUTH_ATTI')">#{menu.acctAuthAtti},</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'ASAC_AUTH_ATTI')">#{menu.asacAuthAtti},</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'TIME_ATTI')">#{menu.timeAtti},</if>
+                #{menu.workflowFlag},
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'WORKFLOW_BIZ_TYPE')">#{menu.workflowBizType},</if>
+                #{menu.isAdmin}, #{menu.isOperator},
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'IS_USER')">#{menu.isUser},</if>
+                #{menu.sortNo}, #{menu.subsystemCode}, #{menu.folderCode},
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_CATEGORY_NO')">#{menu.bizCategoryNo},</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_CATEGORY_NAME')">#{menu.bizCategoryName},</if>
+                #{menu.menuIcon},
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'MENU_HERF_TYPE')">#{menu.menuHerfType},</if>
+                #{menu.menuHerf}, #{menu.menuAttribute}, #{menu.iconFlag}, #{menu.isKeepAlive},
+                #{menu.jumpHerf},
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'TB_VERSION')">#{menu.tbVersion},</if>
+                <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'DESCRIPTION')">#{menu.description},</if>
+            </trim>
         )
     </insert>
 
     <!-- 根据复合主键更新（不更新主键字段） -->
     <update id="updateByKey">
         UPDATE ${tableName}
-        SET MENU_NAME = #{menu.menuName},
+        <set>
+            MENU_NAME = #{menu.menuName},
             MENU_LEVEL = #{menu.menuLevel},
             MENU_TYPE = #{menu.menuType},
             UPP_MENU_CODE = #{menu.uppMenuCode},
@@ -165,31 +233,33 @@
             MENU_VERIFY = #{menu.menuVerify},
             MENU_DISPLAY = #{menu.menuDisplay},
             TR_CODE = #{menu.trCode},
-            CTRL_ATTI = #{menu.ctrlAtti},
-            BIZ_ATTI = #{menu.bizAtti},
-            ACCT_AUTH_ATTI = #{menu.acctAuthAtti},
-            ASAC_AUTH_ATTI = #{menu.asacAuthAtti},
-            TIME_ATTI = #{menu.timeAtti},
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'SECURITY_TR_CODE')">SECURITY_TR_CODE = #{menu.securityTrCode},</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'CTRL_ATTI')">CTRL_ATTI = #{menu.ctrlAtti},</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_ATTI')">BIZ_ATTI = #{menu.bizAtti},</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'ACCT_AUTH_ATTI')">ACCT_AUTH_ATTI = #{menu.acctAuthAtti},</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'ASAC_AUTH_ATTI')">ASAC_AUTH_ATTI = #{menu.asacAuthAtti},</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'TIME_ATTI')">TIME_ATTI = #{menu.timeAtti},</if>
             WORKFLOW_FLAG = #{menu.workflowFlag},
-            WORKFLOW_BIZ_TYPE = #{menu.workflowBizType},
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'WORKFLOW_BIZ_TYPE')">WORKFLOW_BIZ_TYPE = #{menu.workflowBizType},</if>
             IS_ADMIN = #{menu.isAdmin},
             IS_OPERATOR = #{menu.isOperator},
-            IS_USER = #{menu.isUser},
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'IS_USER')">IS_USER = #{menu.isUser},</if>
             SORT_NO = #{menu.sortNo},
             SUBSYSTEM_CODE = #{menu.subsystemCode},
             FOLDER_CODE = #{menu.folderCode},
-            BIZ_CATEGORY_NO = #{menu.bizCategoryNo},
-            BIZ_CATEGORY_NAME = #{menu.bizCategoryName},
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_CATEGORY_NO')">BIZ_CATEGORY_NO = #{menu.bizCategoryNo},</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'BIZ_CATEGORY_NAME')">BIZ_CATEGORY_NAME = #{menu.bizCategoryName},</if>
             MENU_ICON = #{menu.menuIcon},
-            MENU_HERF_TYPE = #{menu.menuHerfType},
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'MENU_HERF_TYPE')">MENU_HERF_TYPE = #{menu.menuHerfType},</if>
             MENU_HERF = #{menu.menuHerf},
             MENU_ATTRIBUTE = #{menu.menuAttribute},
             ICON_FLAG = #{menu.iconFlag},
             IS_KEEP_ALIVE = #{menu.isKeepAlive},
             JUMP_HERF = #{menu.jumpHerf},
             STAT = #{menu.stat},
-            TB_VERSION = #{menu.tbVersion},
-            DESCRIPTION = #{menu.description}
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'TB_VERSION')">TB_VERSION = #{menu.tbVersion},</if>
+            <if test="@com.example.permmenu.util.TableMetaUtil@hasColumn(tableName, 'DESCRIPTION')">DESCRIPTION = #{menu.description},</if>
+        </set>
         WHERE MENU_CODE = #{menu.menuCode}
           AND MENU_SCOPE = #{menu.menuScope}
           AND TENANT_ID = #{menu.tenantId}

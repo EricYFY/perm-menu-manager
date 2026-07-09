@@ -7,6 +7,7 @@ import com.example.permmenu.entity.PermMenu;
 import com.example.permmenu.mapper.PermMenuMapper;
 import com.example.permmenu.service.EditSessionService;
 import com.example.permmenu.service.MenuService;
+import com.example.permmenu.util.TableMetaUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -36,7 +37,7 @@ public class MenuServiceImpl implements MenuService {
         if (tableName == null || tableName.isEmpty()) {
             tableName = "perm_menu";
         }
-        
+
         List<PermMenu> menuList = permMenuMapper.selectByScope(menuScope, tenantId, tableName, subsystemCode);
 
         List<MenuTreeNode> nodeList = menuList.stream()
@@ -76,7 +77,7 @@ public class MenuServiceImpl implements MenuService {
         if (tableName == null || tableName.isEmpty()) {
             tableName = "perm_menu";
         }
-        
+
         PermMenu existing = permMenuMapper.selectByKey(
                 menu.getMenuCode(), menu.getMenuScope(), menu.getTenantId(), tableName);
         if (existing != null) {
@@ -107,7 +108,7 @@ public class MenuServiceImpl implements MenuService {
         if (tableName == null || tableName.isEmpty()) {
             tableName = "perm_menu";
         }
-        
+
         PermMenu existing = permMenuMapper.selectByKey(
                 menu.getMenuCode(), menu.getMenuScope(), menu.getTenantId(), tableName);
         if (existing == null) {
@@ -136,7 +137,7 @@ public class MenuServiceImpl implements MenuService {
         if (tableName == null || tableName.isEmpty()) {
             tableName = "perm_menu";
         }
-        
+
         String oldCode = request.getOldMenuCode();
         String newCode = request.getNewMenuCode();
         String menuScope = request.getMenuScope();
@@ -158,7 +159,8 @@ public class MenuServiceImpl implements MenuService {
 
         if (!"perm_menu".equals(tableName)) {
             editSessionService.logSql(tableName, buildInsertSql(newMenu, tableName));
-            editSessionService.logSql(tableName, buildUpdateUppMenuCodeSql(oldCode, newCode, menuScope, tenantId, tableName));
+            editSessionService.logSql(tableName,
+                    buildUpdateUppMenuCodeSql(oldCode, newCode, menuScope, tenantId, tableName));
             editSessionService.logSql(tableName, buildDeleteSql(oldCode, menuScope, tenantId, tableName));
         }
 
@@ -176,7 +178,7 @@ public class MenuServiceImpl implements MenuService {
         if (tableName == null || tableName.isEmpty()) {
             tableName = "perm_menu";
         }
-        
+
         String menuCode = request.getMenuCode();
         String newUppMenuCode = request.getNewUppMenuCode();
         String menuScope = request.getMenuScope();
@@ -225,7 +227,7 @@ public class MenuServiceImpl implements MenuService {
         if (tableName == null || tableName.isEmpty()) {
             tableName = "perm_menu";
         }
-        
+
         PermMenu menu = permMenuMapper.selectByKey(menuCode, menuScope, tenantId, tableName);
         if (menu == null) {
             throw new RuntimeException("菜单不存在：" + menuCode);
@@ -235,7 +237,8 @@ public class MenuServiceImpl implements MenuService {
 
         for (PermMenu descendant : descendants) {
             if (!"perm_menu".equals(tableName)) {
-                editSessionService.logSql(tableName, buildDeleteSql(descendant.getMenuCode(), menuScope, tenantId, tableName));
+                editSessionService.logSql(tableName,
+                        buildDeleteSql(descendant.getMenuCode(), menuScope, tenantId, tableName));
             }
             permMenuMapper.deleteByKey(descendant.getMenuCode(), menuScope, tenantId, tableName);
         }
@@ -247,18 +250,18 @@ public class MenuServiceImpl implements MenuService {
     }
 
     private void updateChildrenLevel(String parentCode, String menuScope,
-                                     String tenantId, long levelDiff, String tableName) {
+            String tenantId, long levelDiff, String tableName) {
         List<PermMenu> children = permMenuMapper.selectChildren(parentCode, menuScope, tenantId, tableName);
         for (PermMenu child : children) {
             if (child.getMenuLevel() == 9) {
                 continue;
             }
             child.setMenuLevel(child.getMenuLevel() + levelDiff);
-            
+
             if (!"perm_menu".equals(tableName)) {
                 editSessionService.logSql(tableName, buildUpdateSql(child, tableName));
             }
-            
+
             permMenuMapper.updateByKey(child, tableName);
             updateChildrenLevel(child.getMenuCode(), menuScope, tenantId, levelDiff, tableName);
         }
@@ -274,8 +277,7 @@ public class MenuServiceImpl implements MenuService {
     private void sortTreeNodes(List<MenuTreeNode> nodes) {
         nodes.sort(Comparator.comparing(
                 MenuTreeNode::getSortNo,
-                Comparator.nullsLast(String::compareTo)
-        ));
+                Comparator.nullsLast(String::compareTo)));
         for (MenuTreeNode node : nodes) {
             if (node.getChildren() != null && !node.getChildren().isEmpty()) {
                 sortTreeNodes(node.getChildren());
@@ -284,48 +286,203 @@ public class MenuServiceImpl implements MenuService {
     }
 
     private void setDefaultValues(PermMenu menu) {
-        if (menu.getTenantId() == null || menu.getTenantId().isEmpty()) menu.setTenantId("047");
-        if (menu.getStat() == null || menu.getStat().isEmpty()) menu.setStat("1");
-        if (menu.getCtrlAtti() == null || menu.getCtrlAtti().isEmpty()) menu.setCtrlAtti("000000000100000");
-        if (menu.getTbVersion() == null || menu.getTbVersion().isEmpty()) menu.setTbVersion("3.0.0");
-        if (menu.getMenuAttribute() == null || menu.getMenuAttribute().isEmpty()) menu.setMenuAttribute("10000000");
+        if (menu.getTenantId() == null || menu.getTenantId().isEmpty())
+            menu.setTenantId("047");
+        if (menu.getStat() == null || menu.getStat().isEmpty())
+            menu.setStat("1");
+        if (menu.getCtrlAtti() == null || menu.getCtrlAtti().isEmpty())
+            menu.setCtrlAtti("000000000100000");
+        if (menu.getTbVersion() == null || menu.getTbVersion().isEmpty())
+            menu.setTbVersion("3.0.0");
+        if (menu.getMenuAttribute() == null || menu.getMenuAttribute().isEmpty())
+            menu.setMenuAttribute("10000000");
     }
 
     // --- SQL Builder Methods for Audit Log ---
 
     private String escape(String val) {
-        if (val == null) return "NULL";
+        if (val == null)
+            return "NULL";
         return "'" + val.replace("'", "''") + "'";
     }
 
     private String buildInsertSql(PermMenu menu, String tableName) {
-        return String.format(
-            "INSERT INTO %s (TENANT_ID, STAT, MENU_SCOPE, MENU_CODE, MENU_NAME, MENU_LEVEL, MENU_TYPE, UPP_MENU_CODE, MENU_CHECKED, MENU_KIND, MENU_VERIFY, MENU_DISPLAY, TR_CODE, SECURITY_TR_CODE, CTRL_ATTI, BIZ_ATTI, ACCT_AUTH_ATTI, ASAC_AUTH_ATTI, TIME_ATTI, WORKFLOW_FLAG, WORKFLOW_BIZ_TYPE, IS_ADMIN, IS_OPERATOR, IS_USER, SORT_NO, SUBSYSTEM_CODE, FOLDER_CODE, BIZ_CATEGORY_NO, BIZ_CATEGORY_NAME, MENU_ICON, MENU_HERF_TYPE, MENU_HERF, MENU_ATTRIBUTE, ICON_FLAG, IS_KEEP_ALIVE, JUMP_HERF, TB_VERSION, DESCRIPTION) VALUES (%s, %s, %s, %s, %s, %d, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
-            tableName,
-            escape(menu.getTenantId()), escape(menu.getStat()), escape(menu.getMenuScope()), escape(menu.getMenuCode()), escape(menu.getMenuName()), menu.getMenuLevel(), escape(menu.getMenuType()), escape(menu.getUppMenuCode()), escape(menu.getMenuChecked()), escape(menu.getMenuKind()), escape(menu.getMenuVerify()), escape(menu.getMenuDisplay()), escape(menu.getTrCode()), escape(menu.getSecurityTrCode()), escape(menu.getCtrlAtti()), escape(menu.getBizAtti()), escape(menu.getAcctAuthAtti()), escape(menu.getAsacAuthAtti()), escape(menu.getTimeAtti()), escape(menu.getWorkflowFlag()), escape(menu.getWorkflowBizType()), escape(menu.getIsAdmin()), escape(menu.getIsOperator()), escape(menu.getIsUser()), escape(menu.getSortNo()), escape(menu.getSubsystemCode()), escape(menu.getFolderCode()), escape(menu.getBizCategoryNo()), escape(menu.getBizCategoryName()), escape(menu.getMenuIcon()), escape(menu.getMenuHerfType()), escape(menu.getMenuHerf()), escape(menu.getMenuAttribute()), escape(menu.getIconFlag()), escape(menu.getIsKeepAlive()), escape(menu.getJumpHerf()), escape(menu.getTbVersion()), escape(menu.getDescription())
-        );
+        List<String> cols = new ArrayList<>(
+                Arrays.asList("TENANT_ID", "STAT", "MENU_SCOPE", "MENU_CODE", "MENU_NAME", "MENU_LEVEL", "MENU_TYPE",
+                        "UPP_MENU_CODE", "MENU_CHECKED", "MENU_KIND", "MENU_VERIFY", "MENU_DISPLAY", "TR_CODE"));
+        List<String> vals = new ArrayList<>(Arrays.asList(escape(menu.getTenantId()), escape(menu.getStat()),
+                escape(menu.getMenuScope()), escape(menu.getMenuCode()), escape(menu.getMenuName()),
+                String.valueOf(menu.getMenuLevel()), escape(menu.getMenuType()), escape(menu.getUppMenuCode()),
+                escape(menu.getMenuChecked()), escape(menu.getMenuKind()), escape(menu.getMenuVerify()),
+                escape(menu.getMenuDisplay()), escape(menu.getTrCode())));
+
+        if (TableMetaUtil.hasColumn(tableName, "SECURITY_TR_CODE")) {
+            cols.add("SECURITY_TR_CODE");
+            vals.add(escape(menu.getSecurityTrCode()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "CTRL_ATTI")) {
+            cols.add("CTRL_ATTI");
+            vals.add(escape(menu.getCtrlAtti()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "BIZ_ATTI")) {
+            cols.add("BIZ_ATTI");
+            vals.add(escape(menu.getBizAtti()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "ACCT_AUTH_ATTI")) {
+            cols.add("ACCT_AUTH_ATTI");
+            vals.add(escape(menu.getAcctAuthAtti()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "ASAC_AUTH_ATTI")) {
+            cols.add("ASAC_AUTH_ATTI");
+            vals.add(escape(menu.getAsacAuthAtti()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "TIME_ATTI")) {
+            cols.add("TIME_ATTI");
+            vals.add(escape(menu.getTimeAtti()));
+        }
+
+        cols.add("WORKFLOW_FLAG");
+        vals.add(escape(menu.getWorkflowFlag()));
+
+        if (TableMetaUtil.hasColumn(tableName, "WORKFLOW_BIZ_TYPE")) {
+            cols.add("WORKFLOW_BIZ_TYPE");
+            vals.add(escape(menu.getWorkflowBizType()));
+        }
+
+        cols.add("IS_ADMIN");
+        vals.add(escape(menu.getIsAdmin()));
+        cols.add("IS_OPERATOR");
+        vals.add(escape(menu.getIsOperator()));
+
+        if (TableMetaUtil.hasColumn(tableName, "IS_USER")) {
+            cols.add("IS_USER");
+            vals.add(escape(menu.getIsUser()));
+        }
+
+        cols.add("SORT_NO");
+        vals.add(escape(menu.getSortNo()));
+        cols.add("SUBSYSTEM_CODE");
+        vals.add(escape(menu.getSubsystemCode()));
+        cols.add("FOLDER_CODE");
+        vals.add(escape(menu.getFolderCode()));
+
+        if (TableMetaUtil.hasColumn(tableName, "BIZ_CATEGORY_NO")) {
+            cols.add("BIZ_CATEGORY_NO");
+            vals.add(escape(menu.getBizCategoryNo()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "BIZ_CATEGORY_NAME")) {
+            cols.add("BIZ_CATEGORY_NAME");
+            vals.add(escape(menu.getBizCategoryName()));
+        }
+        cols.add("MENU_ICON");
+        vals.add(escape(menu.getMenuIcon()));
+        if (TableMetaUtil.hasColumn(tableName, "MENU_HERF_TYPE")) {
+            cols.add("MENU_HERF_TYPE");
+            vals.add(escape(menu.getMenuHerfType()));
+        }
+        cols.add("MENU_HERF");
+        vals.add(escape(menu.getMenuHerf()));
+        cols.add("MENU_ATTRIBUTE");
+        vals.add(escape(menu.getMenuAttribute()));
+        cols.add("ICON_FLAG");
+        vals.add(escape(menu.getIconFlag()));
+        cols.add("IS_KEEP_ALIVE");
+        vals.add(escape(menu.getIsKeepAlive()));
+        cols.add("JUMP_HERF");
+        vals.add(escape(menu.getJumpHerf()));
+        if (TableMetaUtil.hasColumn(tableName, "TB_VERSION")) {
+            cols.add("TB_VERSION");
+            vals.add(escape(menu.getTbVersion()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "DESCRIPTION")) {
+            cols.add("DESCRIPTION");
+            vals.add(escape(menu.getDescription()));
+        }
+
+        return "INSERT INTO " + tableName + " (" + String.join(", ", cols) + ") VALUES (" + String.join(", ", vals)
+                + ");";
     }
 
     private String buildUpdateSql(PermMenu menu, String tableName) {
-        return String.format(
-            "UPDATE %s SET MENU_NAME = %s, MENU_LEVEL = %d, MENU_TYPE = %s, UPP_MENU_CODE = %s, MENU_CHECKED = %s, MENU_KIND = %s, MENU_VERIFY = %s, MENU_DISPLAY = %s, TR_CODE = %s, SECURITY_TR_CODE = %s, CTRL_ATTI = %s, BIZ_ATTI = %s, ACCT_AUTH_ATTI = %s, ASAC_AUTH_ATTI = %s, TIME_ATTI = %s, WORKFLOW_FLAG = %s, WORKFLOW_BIZ_TYPE = %s, IS_ADMIN = %s, IS_OPERATOR = %s, IS_USER = %s, SORT_NO = %s, SUBSYSTEM_CODE = %s, FOLDER_CODE = %s, BIZ_CATEGORY_NO = %s, BIZ_CATEGORY_NAME = %s, MENU_ICON = %s, MENU_HERF_TYPE = %s, MENU_HERF = %s, MENU_ATTRIBUTE = %s, ICON_FLAG = %s, IS_KEEP_ALIVE = %s, JUMP_HERF = %s, STAT = %s, TB_VERSION = %s, DESCRIPTION = %s WHERE MENU_CODE = %s AND MENU_SCOPE = %s AND TENANT_ID = %s;",
-            tableName,
-            escape(menu.getMenuName()), menu.getMenuLevel(), escape(menu.getMenuType()), escape(menu.getUppMenuCode()), escape(menu.getMenuChecked()), escape(menu.getMenuKind()), escape(menu.getMenuVerify()), escape(menu.getMenuDisplay()), escape(menu.getTrCode()), escape(menu.getSecurityTrCode()), escape(menu.getCtrlAtti()), escape(menu.getBizAtti()), escape(menu.getAcctAuthAtti()), escape(menu.getAsacAuthAtti()), escape(menu.getTimeAtti()), escape(menu.getWorkflowFlag()), escape(menu.getWorkflowBizType()), escape(menu.getIsAdmin()), escape(menu.getIsOperator()), escape(menu.getIsUser()), escape(menu.getSortNo()), escape(menu.getSubsystemCode()), escape(menu.getFolderCode()), escape(menu.getBizCategoryNo()), escape(menu.getBizCategoryName()), escape(menu.getMenuIcon()), escape(menu.getMenuHerfType()), escape(menu.getMenuHerf()), escape(menu.getMenuAttribute()), escape(menu.getIconFlag()), escape(menu.getIsKeepAlive()), escape(menu.getJumpHerf()), escape(menu.getStat()), escape(menu.getTbVersion()), escape(menu.getDescription()),
-            escape(menu.getMenuCode()), escape(menu.getMenuScope()), escape(menu.getTenantId())
-        );
+        List<String> sets = new ArrayList<>();
+        sets.add("MENU_NAME = " + escape(menu.getMenuName()));
+        sets.add("MENU_LEVEL = " + menu.getMenuLevel());
+        sets.add("MENU_TYPE = " + escape(menu.getMenuType()));
+        sets.add("UPP_MENU_CODE = " + escape(menu.getUppMenuCode()));
+        sets.add("MENU_CHECKED = " + escape(menu.getMenuChecked()));
+        sets.add("MENU_KIND = " + escape(menu.getMenuKind()));
+        sets.add("MENU_VERIFY = " + escape(menu.getMenuVerify()));
+        sets.add("MENU_DISPLAY = " + escape(menu.getMenuDisplay()));
+        sets.add("TR_CODE = " + escape(menu.getTrCode()));
+
+        if (TableMetaUtil.hasColumn(tableName, "SECURITY_TR_CODE")) {
+            sets.add("SECURITY_TR_CODE = " + escape(menu.getSecurityTrCode()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "CTRL_ATTI")) {
+            sets.add("CTRL_ATTI = " + escape(menu.getCtrlAtti()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "BIZ_ATTI")) {
+            sets.add("BIZ_ATTI = " + escape(menu.getBizAtti()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "ACCT_AUTH_ATTI")) {
+            sets.add("ACCT_AUTH_ATTI = " + escape(menu.getAcctAuthAtti()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "ASAC_AUTH_ATTI")) {
+            sets.add("ASAC_AUTH_ATTI = " + escape(menu.getAsacAuthAtti()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "TIME_ATTI")) {
+            sets.add("TIME_ATTI = " + escape(menu.getTimeAtti()));
+        }
+        sets.add("WORKFLOW_FLAG = " + escape(menu.getWorkflowFlag()));
+        if (TableMetaUtil.hasColumn(tableName, "WORKFLOW_BIZ_TYPE")) {
+            sets.add("WORKFLOW_BIZ_TYPE = " + escape(menu.getWorkflowBizType()));
+        }
+        sets.add("IS_ADMIN = " + escape(menu.getIsAdmin()));
+        sets.add("IS_OPERATOR = " + escape(menu.getIsOperator()));
+        if (TableMetaUtil.hasColumn(tableName, "IS_USER")) {
+            sets.add("IS_USER = " + escape(menu.getIsUser()));
+        }
+        sets.add("SORT_NO = " + escape(menu.getSortNo()));
+        sets.add("SUBSYSTEM_CODE = " + escape(menu.getSubsystemCode()));
+        sets.add("FOLDER_CODE = " + escape(menu.getFolderCode()));
+        if (TableMetaUtil.hasColumn(tableName, "BIZ_CATEGORY_NO")) {
+            sets.add("BIZ_CATEGORY_NO = " + escape(menu.getBizCategoryNo()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "BIZ_CATEGORY_NAME")) {
+            sets.add("BIZ_CATEGORY_NAME = " + escape(menu.getBizCategoryName()));
+        }
+        sets.add("MENU_ICON = " + escape(menu.getMenuIcon()));
+        if (TableMetaUtil.hasColumn(tableName, "MENU_HERF_TYPE")) {
+            sets.add("MENU_HERF_TYPE = " + escape(menu.getMenuHerfType()));
+        }
+        sets.add("MENU_HERF = " + escape(menu.getMenuHerf()));
+        sets.add("MENU_ATTRIBUTE = " + escape(menu.getMenuAttribute()));
+        sets.add("ICON_FLAG = " + escape(menu.getIconFlag()));
+        sets.add("IS_KEEP_ALIVE = " + escape(menu.getIsKeepAlive()));
+        sets.add("JUMP_HERF = " + escape(menu.getJumpHerf()));
+        sets.add("STAT = " + escape(menu.getStat()));
+        if (TableMetaUtil.hasColumn(tableName, "TB_VERSION")) {
+            sets.add("TB_VERSION = " + escape(menu.getTbVersion()));
+        }
+        if (TableMetaUtil.hasColumn(tableName, "DESCRIPTION")) {
+            sets.add("DESCRIPTION = " + escape(menu.getDescription()));
+        }
+
+        return "UPDATE " + tableName + " SET " + String.join(", ", sets) + " WHERE MENU_CODE = "
+                + escape(menu.getMenuCode()) + " AND MENU_SCOPE = " + escape(menu.getMenuScope()) + " AND TENANT_ID = "
+                + escape(menu.getTenantId()) + ";";
     }
 
     private String buildDeleteSql(String menuCode, String menuScope, String tenantId, String tableName) {
         return String.format(
-            "DELETE FROM %s WHERE MENU_CODE = %s AND MENU_SCOPE = %s AND TENANT_ID = %s;",
-            tableName, escape(menuCode), escape(menuScope), escape(tenantId)
-        );
+                "DELETE FROM %s WHERE MENU_CODE = %s AND MENU_SCOPE = %s AND TENANT_ID = %s;",
+                tableName, escape(menuCode), escape(menuScope), escape(tenantId));
     }
 
-    private String buildUpdateUppMenuCodeSql(String oldCode, String newCode, String menuScope, String tenantId, String tableName) {
+    private String buildUpdateUppMenuCodeSql(String oldCode, String newCode, String menuScope, String tenantId,
+            String tableName) {
         return String.format(
-            "UPDATE %s SET UPP_MENU_CODE = %s WHERE UPP_MENU_CODE = %s AND MENU_SCOPE = %s AND TENANT_ID = %s;",
-            tableName, escape(newCode), escape(oldCode), escape(menuScope), escape(tenantId)
-        );
+                "UPDATE %s SET UPP_MENU_CODE = %s WHERE UPP_MENU_CODE = %s AND MENU_SCOPE = %s AND TENANT_ID = %s;",
+                tableName, escape(newCode), escape(oldCode), escape(menuScope), escape(tenantId));
     }
 }

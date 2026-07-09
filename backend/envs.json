@@ -16,7 +16,7 @@
   "masterUsername" : "root",
   "masterPassword" : "NJcb@1234.",
   "masterDriver" : "com.mysql.cj.jdbc.Driver",
-  "secondUrl" : "jdbc:mysql://127.0.0.1:2881/sit_ebpm_ebbe_global",
+  "secondUrl" : "jdbc:mysql://127.0.0.1:2881/sit2_ebpm_ebbe_global",
   "secondUsername" : "root",
   "secondPassword" : "NJcb@1234.",
   "secondDriver" : "com.mysql.cj.jdbc.Driver"

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.permmenu.mapper.ComDictMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="comDictResultMap" type="com.example.permmenu.entity.ComDict">
+        <result column="TENANT_ID" property="tenantId"/>
+        <result column="STAT" property="stat"/>
+        <result column="DICT_ID" property="dictId"/>
+        <result column="DICT_KEY" property="dictKey"/>
+        <result column="DICT_VALUE" property="dictValue"/>
+        <result column="REL_KEY" property="relKey"/>
+        <result column="ENUM_KEY" property="enumKey"/>
+        <result column="SCENE" property="scene"/>
+        <result column="SORT_NO" property="sortNo"/>
+        <result column="REMARK" property="remark"/>
+    </resultMap>
+
+    <!-- 查询所有不同的 DICT_ID 及其关联的 REMARK -->
+    <select id="selectDistinctDictIds" resultMap="comDictResultMap">
+        SELECT DICT_ID, MAX(REMARK) AS REMARK
+        FROM com_dict
+        WHERE TENANT_ID = #{tenantId}
+        GROUP BY DICT_ID
+        ORDER BY DICT_ID
+    </select>
+
+    <!-- 根据 DICT_ID 查询所有字典条目 -->
+    <select id="selectByDictId" resultMap="comDictResultMap">
+        SELECT TENANT_ID, STAT, DICT_ID, DICT_KEY, DICT_VALUE, REL_KEY, ENUM_KEY, SCENE, SORT_NO, REMARK
+        FROM com_dict
+        WHERE DICT_ID = #{dictId}
+          AND TENANT_ID = #{tenantId}
+        ORDER BY SORT_NO, DICT_KEY
+    </select>
+
+    <!-- 根据复合主键查询 -->
+    <select id="selectByKey" resultMap="comDictResultMap">
+        SELECT TENANT_ID, STAT, DICT_ID, DICT_KEY, DICT_VALUE, REL_KEY, ENUM_KEY, SCENE, SORT_NO, REMARK
+        FROM com_dict
+        WHERE DICT_ID = #{dictId}
+          AND DICT_KEY = #{dictKey}
+          AND TENANT_ID = #{tenantId}
+    </select>
+
+    <!-- 插入字典记录 -->
+    <insert id="insertDict">
+        INSERT INTO com_dict (TENANT_ID, STAT, DICT_ID, DICT_KEY, DICT_VALUE, REL_KEY, ENUM_KEY, SCENE, SORT_NO, REMARK)
+        VALUES (#{dict.tenantId}, #{dict.stat}, #{dict.dictId}, #{dict.dictKey}, #{dict.dictValue},
+                #{dict.relKey}, #{dict.enumKey}, #{dict.scene}, #{dict.sortNo}, #{dict.remark})
+    </insert>
+
+    <!-- 根据复合主键更新 -->
+    <update id="updateByKey">
+        UPDATE com_dict
+        <set>
+            STAT = #{dict.stat},
+            DICT_VALUE = #{dict.dictValue},
+            REL_KEY = #{dict.relKey},
+            ENUM_KEY = #{dict.enumKey},
+            SCENE = #{dict.scene},
+            SORT_NO = #{dict.sortNo},
+            REMARK = #{dict.remark},
+        </set>
+        WHERE DICT_ID = #{dict.dictId}
+          AND DICT_KEY = #{dict.dictKey}
+          AND TENANT_ID = #{dict.tenantId}
+    </update>
+
+    <!-- 根据复合主键删除 -->
+    <delete id="deleteByKey">
+        DELETE FROM com_dict
+        WHERE DICT_ID = #{dictId}
+          AND DICT_KEY = #{dictKey}
+          AND TENANT_ID = #{tenantId}
+    </delete>
+
+    <!-- 删除整个 DICT_ID 下的所有记录 -->
+    <delete id="deleteByDictId">
+        DELETE FROM com_dict
+        WHERE DICT_ID = #{dictId}
+          AND TENANT_ID = #{tenantId}
+    </delete>
+
+</mapper>
