@@ -14,6 +14,7 @@ import com.example.permmenu.service.EditSessionService;
 import com.example.permmenu.service.MenuService;
 import com.example.permmenu.util.TableMetaUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 /**
  * 菜单服务实现类
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MenuServiceImpl implements MenuService {
@@ -44,6 +46,7 @@ public class MenuServiceImpl implements MenuService {
         if (tableName == null || tableName.isEmpty()) {
             tableName = "perm_menu";
         }
+        log.info("【查询菜单树】menuScope: [{}], tenantId: [{}], tableName: [{}], subsystemCode: [{}]", menuScope, tenantId, tableName, subsystemCode);
 
         List<PermMenu> menuList = permMenuMapper.selectByScope(menuScope, tenantId, tableName, subsystemCode);
 
@@ -97,6 +100,7 @@ public class MenuServiceImpl implements MenuService {
         if (tableName == null || tableName.isEmpty()) {
             tableName = "perm_menu";
         }
+        log.info("【新增菜单】准备在表 [{}] 中新增菜单: code [{}], name [{}], scope [{}], uppCode [{}]", tableName, menu.getMenuCode(), menu.getMenuName(), menu.getMenuScope(), menu.getUppMenuCode());
 
         PermMenu existing = permMenuMapper.selectByKey(
                 menu.getMenuCode(), menu.getMenuScope(), menu.getTenantId(), tableName);
@@ -128,6 +132,7 @@ public class MenuServiceImpl implements MenuService {
         if (tableName == null || tableName.isEmpty()) {
             tableName = "perm_menu";
         }
+        log.info("【更新菜单】准备在表 [{}] 中修改菜单: code [{}], name [{}], scope [{}], level [{}]", tableName, menu.getMenuCode(), menu.getMenuName(), menu.getMenuScope(), menu.getMenuLevel());
 
         PermMenu existing = permMenuMapper.selectByKey(
                 menu.getMenuCode(), menu.getMenuScope(), menu.getTenantId(), tableName);
@@ -162,6 +167,7 @@ public class MenuServiceImpl implements MenuService {
         String newCode = request.getNewMenuCode();
         String menuScope = request.getMenuScope();
         String tenantId = request.getTenantId();
+        log.info("【批量修改菜单编码】表: [{}], menuScope: [{}], 旧编码: [{}], 新编码: [{}]", tableName, menuScope, oldCode, newCode);
 
         PermMenu oldMenu = permMenuMapper.selectByKey(oldCode, menuScope, tenantId, tableName);
         if (oldMenu == null) {
@@ -203,6 +209,7 @@ public class MenuServiceImpl implements MenuService {
         String newUppMenuCode = request.getNewUppMenuCode();
         String menuScope = request.getMenuScope();
         String tenantId = request.getTenantId();
+        log.info("【菜单层级拖拽调整】表: [{}], menuScope: [{}], 菜单编码: [{}], 调整后新父编码: [{}]", tableName, menuScope, menuCode, newUppMenuCode);
 
         if (menuCode != null && menuCode.equals(newUppMenuCode)) {
             throw new RuntimeException("不能将菜单拖拽到自身之下");
@@ -272,6 +279,7 @@ public class MenuServiceImpl implements MenuService {
         if (tableName == null || tableName.isEmpty()) {
             tableName = "perm_menu";
         }
+        log.info("【删除菜单节点及后代】准备在表 [{}] 中删除菜单编码 [{}], 作用域 [{}]", tableName, menuCode, menuScope);
 
         PermMenu menu = permMenuMapper.selectByKey(menuCode, menuScope, tenantId, tableName);
         if (menu == null) {
@@ -539,9 +547,11 @@ public class MenuServiceImpl implements MenuService {
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = "047";
         }
+        log.info("【查询菜单加挂功能详情】menuScope: [{}], menuCode: [{}], tenantId: [{}]", menuScope, menuCode, tenantId);
         try {
             return permFeatureMenuMapper.selectFeatureMountsByMenu(menuScope, menuCode, tenantId);
         } catch (Exception e) {
+            log.error("【查询菜单加挂异常】: {}", e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -551,9 +561,11 @@ public class MenuServiceImpl implements MenuService {
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = "047";
         }
+        log.info("【查询产品功能表(模糊过滤)】tenantId: [{}], keyword: [{}]", tenantId, keyword);
         try {
             return permProdFeatureMapper.selectProdFeatures(tenantId, keyword);
         } catch (Exception e) {
+            log.error("【查询产品功能异常】: {}", e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -567,6 +579,7 @@ public class MenuServiceImpl implements MenuService {
         if (request.getStat() == null || request.getStat().isEmpty()) {
             request.setStat("1");
         }
+        log.info("【新增功能加挂】准备将菜单 [{} (scope: {})] 加挂至产品 [{}], 功能 [{}]", request.getMenuCode(), request.getMenuScope(), request.getProdCode(), request.getFeatureId());
         int existCount = permFeatureMenuMapper.checkExistFeatureMenu(
                 request.getMenuScope(),
                 request.getMenuCode(),
@@ -574,9 +587,11 @@ public class MenuServiceImpl implements MenuService {
                 request.getFeatureId(),
                 request.getTenantId());
         if (existCount > 0) {
+            log.warn("【重复加挂拦截】菜单已经加挂到该产品功能：menuCode [{}], prodCode [{}], featureId [{}]", request.getMenuCode(), request.getProdCode(), request.getFeatureId());
             throw new RuntimeException("该菜单已经加挂到该产品功能，请勿重复加挂");
         }
         permFeatureMenuMapper.insertFeatureMenu(request);
+        log.info("【功能加挂成功】插入加挂关系至 perm_feature_menu 成功");
     }
 
     @Override
@@ -585,6 +600,8 @@ public class MenuServiceImpl implements MenuService {
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = "047";
         }
+        log.info("【移除功能加挂】将菜单 [{} (scope: {})] 从产品 [{}], 功能 [{}] 移除", menuCode, menuScope, prodCode, featureId);
         permFeatureMenuMapper.deleteFeatureMenu(menuScope, menuCode, prodCode, featureId, tenantId);
+        log.info("【移除功能加挂成功】已从 perm_feature_menu 删除关系记录");
     }
 }

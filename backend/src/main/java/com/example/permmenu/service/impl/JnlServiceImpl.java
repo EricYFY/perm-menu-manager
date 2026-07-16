@@ -34,6 +34,7 @@ public class JnlServiceImpl implements JnlService {
         } else {
             tableName = "tbsp_jnl_" + suffix;
         }
+        log.info("【查询交易流水分页】路由分表: [{}], 交易码: [{}], 客户号: [{}], 状态: [{}], 渠道: [{}], 页码: {}/{}", tableName, trCode, custNo, jnlStat, channelNo, pageNo, pageSize);
 
         Page<TbspJnl> page = new Page<>(pageNo, pageSize);
         return jnlMapper.selectJnlPage(page, tableName, trCode, custNo, jnlStat, channelNo);
@@ -46,6 +47,7 @@ public class JnlServiceImpl implements JnlService {
         }
         String suffix = custNo.substring(custNo.length() - 2);
         String tableName = "tbsp_data_" + suffix;
+        log.info("【报文数据查询】路由分表: [{}], 流水号 serialNo: [{}], 客户号: [{}]", tableName, serialNo, custNo);
         return jnlMapper.selectTbspData(tableName, serialNo);
     }
 
@@ -54,6 +56,7 @@ public class JnlServiceImpl implements JnlService {
         if (custNos == null || custNos.isEmpty() || trCode == null || trCode.trim().isEmpty()) {
             return false;
         }
+        log.info("【检查接口调用状态】交易码: [{}], 渠道: [{}], 待排查客户号列表: {}", trCode, channelNo, custNos);
 
         for (String custNo : custNos) {
             if (custNo == null || custNo.length() < 2) {

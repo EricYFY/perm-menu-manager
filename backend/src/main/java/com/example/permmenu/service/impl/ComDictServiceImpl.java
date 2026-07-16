@@ -4,6 +4,7 @@ import com.example.permmenu.entity.ComDict;
 import com.example.permmenu.mapper.ComDictMapper;
 import com.example.permmenu.service.ComDictService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +13,7 @@ import java.util.List;
 /**
  * 字典服务实现类
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ComDictServiceImpl implements ComDictService {
@@ -25,12 +27,14 @@ public class ComDictServiceImpl implements ComDictService {
 
     @Override
     public List<ComDict> listByDictId(String dictId, String tenantId) {
+        log.info("【字典条目查询】DICT_ID: [{}], tenantId: [{}]", dictId, tenantId);
         return comDictMapper.selectByDictId(dictId, tenantId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addDictEntry(ComDict dict) {
+        log.info("【新增字典条目】DICT_ID: [{}], DICT_KEY: [{}], tenantId: [{}]", dict.getDictId(), dict.getDictKey(), dict.getTenantId());
         // 检查是否已存在相同主键
         ComDict existing = comDictMapper.selectByKey(dict.getDictId(), dict.getDictKey(), dict.getTenantId());
         if (existing != null) {
@@ -46,6 +50,7 @@ public class ComDictServiceImpl implements ComDictService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateDictEntry(ComDict dict) {
+        log.info("【更新字典条目】DICT_ID: [{}], DICT_KEY: [{}], tenantId: [{}]", dict.getDictId(), dict.getDictKey(), dict.getTenantId());
         ComDict existing = comDictMapper.selectByKey(dict.getDictId(), dict.getDictKey(), dict.getTenantId());
         if (existing == null) {
             throw new RuntimeException("字典条目不存在：DICT_ID=" + dict.getDictId() + ", DICT_KEY=" + dict.getDictKey());
@@ -56,12 +61,14 @@ public class ComDictServiceImpl implements ComDictService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteDictEntry(String dictId, String dictKey, String tenantId) {
+        log.info("【删除字典条目】DICT_ID: [{}], DICT_KEY: [{}], tenantId: [{}]", dictId, dictKey, tenantId);
         comDictMapper.deleteByKey(dictId, dictKey, tenantId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteDictGroup(String dictId, String tenantId) {
+        log.info("【删除字典组】DICT_ID: [{}], tenantId: [{}]", dictId, tenantId);
         comDictMapper.deleteByDictId(dictId, tenantId);
     }
 }

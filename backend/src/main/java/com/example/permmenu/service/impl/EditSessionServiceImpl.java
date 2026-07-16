@@ -64,6 +64,7 @@ public class EditSessionServiceImpl implements EditSessionService {
         if (lock != null) {
             int newerLocks = editLockMapper.countNewerLocks(lock.getId());
             if (newerLocks > 0) {
+                log.warn("【锁被挤占检测】当前临时会话 [{}] 的锁已被更新的锁替换 (newerLocks={})，被迫废弃", tempTableName, newerLocks);
                 dropTempTable(tempTableName);
                 throw new RuntimeException("由于您操作时间过长，且期间已有新用户解锁过系统，您此次的编辑已无效被强制废弃，请重新刷新页面再试！");
             }
@@ -85,6 +86,7 @@ public class EditSessionServiceImpl implements EditSessionService {
         // 2. 生成临时表名
         String timestamp = String.valueOf(System.currentTimeMillis());
         String tempTableName = "perm_menu_" + timestamp;
+        log.info("【解锁临时会话】用户 [{}] 开始创建编辑临时表 [{}], 范围子系统: [{}]", lockedBy, tempTableName, subsystemCode);
 
         // 3. 创建临时表（支持全量或按子系统复制）
         String createTableSql;
@@ -94,6 +96,7 @@ public class EditSessionServiceImpl implements EditSessionService {
             createTableSql = "CREATE TABLE " + tempTableName + " AS SELECT * FROM perm_menu WHERE SUBSYSTEM_CODE = '" + subsystemCode + "'";
         }
         jdbcTemplate.execute(createTableSql);
+        log.info("【临时表初始化成功】建表 SQL 执行成功: [{}]", createTableSql);
 
         // 4. 插入锁记录
         EditLock lock = new EditLock();
@@ -149,6 +152,7 @@ public class EditSessionServiceImpl implements EditSessionService {
         // 3. 直接从内存获取日志（避免 getSqlLog 重复校验）
         List<String> logs = sqlLogs.getOrDefault(tempTableName, Collections.emptyList());
         int successCount = 0;
+        log.info("【提交回放会话】开始将会话 [{}] 中的 {} 条操作 SQL 回写至主表 perm_menu", tempTableName, logs.size());
 
         // 2. 回放 SQL 到正式表
         for (String sql : logs) {
@@ -159,6 +163,7 @@ public class EditSessionServiceImpl implements EditSessionService {
             jdbcTemplate.execute(formalSql);
             successCount++;
         }
+        log.info("【提交回放完成】会话 [{}] 回放完成，成功执行 {} 条 SQL", tempTableName, successCount);
 
         // 3. 一致性校验（仅校验对应子系统范围内的数据）
         String subsystemCode = lock.getSubsystemCode();
@@ -203,6 +208,9 @@ public class EditSessionServiceImpl implements EditSessionService {
         result.put("successCount", successCount);
         if (!diffList.isEmpty()) {
             result.put("diff", diffList);
+            log.warn("【提交一致性校验】发现正式表与临时表存在 {} 条差异记录", diffList.size());
+        } else {
+            log.info("【提交一致性校验】正式表与会话表校验完全一致");
         }
 
         return result;
@@ -212,15 +220,18 @@ public class EditSessionServiceImpl implements EditSessionService {
     @Transactional(rollbackFor = Exception.class)
     public void dropTempTable(String tempTableName) {
         validateTempTableName(tempTableName);
+        log.info("【清理会话及临时表】准备删除临时表并释放锁: [{}]", tempTableName);
         String dropTableSql = "DROP TABLE IF EXISTS " + tempTableName;
         jdbcTemplate.execute(dropTableSql);
         editLockMapper.releaseLock(tempTableName);
         sqlLogs.remove(tempTableName);
+        log.info("【清理完成】临时表 [{}] 已删除，编辑锁已释放", tempTableName);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void cancelSession(String tempTableName) {
+        log.info("【用户取消编辑会话】触发临时会话取消及临时表清理: [{}]", tempTableName);
         dropTempTable(tempTableName);
     }
 }

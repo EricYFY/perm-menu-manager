@@ -1,6 +1,7 @@
 package com.example.permmenu.config;
 
 import com.example.permmenu.dto.ResultVO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -8,11 +9,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import javax.servlet.http.HttpServletResponse;
 import java.sql.SQLSyntaxErrorException;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResultVO<Void> handleException(Exception e) {
+        log.error("【全局异常拦截】系统捕获异常: {}", e.getMessage(), e);
         Throwable cause = e;
         while (cause.getCause() != null && cause.getCause() != cause) {
             cause = cause.getCause();
