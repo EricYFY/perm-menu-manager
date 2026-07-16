@@ -49,6 +49,7 @@
           </span>
         </template>
         <el-button 
+          v-if="!tempTableName && isLocked"
           type="warning" 
           size="small" 
           plain 
@@ -828,7 +829,7 @@ async function handleConfirmAddMount() {
       ElMessage.success('新增加挂成功')
       addMountDialogVisible.value = false
       handleCheckMounts()
-      emit('refresh')
+      emit('refresh', { resetFilter: true })
     } else {
       ElMessage.error(res?.message || '新增加挂失败')
     }
@@ -865,7 +866,7 @@ function handleDeleteMount(row) {
       if (res && res.code === 200) {
         ElMessage.success('删除加挂关系成功')
         handleCheckMounts()
-        emit('refresh')
+        emit('refresh', { resetFilter: true })
       } else {
         ElMessage.error(res?.message || '删除加挂关系失败')
       }

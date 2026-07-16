@@ -182,10 +182,17 @@ const treeProps = {
 /**
  * 加载菜单树数据
  * @param {boolean} keepState - 是否保持当前的所有展开与选中状态，默认不保持
+ * @param {boolean} resetFilter - 是否重置所有筛选和搜索条件到初始默认状态
  */
-async function loadTree(keepState = false) {
+async function loadTree(keepState = false, resetFilter = false) {
   loading.value = true
   
+  if (resetFilter) {
+    searchText.value = ''
+    displayFilter.value = 'all'
+    filterUnmountedOnly.value = false
+  }
+
   // 1. 收集当前的展开 keys 与选中的 key
   const expandedKeysList = []
   let currentSelectedKey = null
@@ -204,6 +211,15 @@ async function loadTree(keepState = false) {
     if (result.code === 200) {
       treeData.value = result.data || []
       
+      await nextTick()
+      if (treeRef.value) {
+        treeRef.value.filter({
+          keyword: searchText.value,
+          display: displayFilter.value,
+          unmounted: filterUnmountedOnly.value
+        })
+      }
+
       if (keepState) {
         // 保持状态：在 DOM 更新后重新还原展开与选中高亮
         await nextTick()

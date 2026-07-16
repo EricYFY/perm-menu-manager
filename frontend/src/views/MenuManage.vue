@@ -380,8 +380,9 @@ function handleAddRoot() {
 /**
  * 刷新树（保存/修改编码后触发）
  */
-function handleRefresh() {
-  menuTreeRef.value?.loadTree()
+function handleRefresh(options = {}) {
+  const resetFilter = options && typeof options === 'object' && !(options instanceof Event) && options.resetFilter === true
+  menuTreeRef.value?.loadTree(true, resetFilter)
 }
 </script>
 
