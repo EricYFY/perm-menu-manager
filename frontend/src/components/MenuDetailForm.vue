@@ -48,6 +48,14 @@
             <span style="color: var(--success-color); font-weight: bold; font-size: 14px;">{{ successInterfacesCount }}</span>
           </span>
         </template>
+        <el-button 
+          type="warning" 
+          size="small" 
+          plain 
+          @click="handleCheckMounts"
+          style="margin-left: 16px;">
+          <el-icon><Connection /></el-icon> 查询产品功能加挂
+        </el-button>
       </div>
       <div class="form-actions" v-if="!isLocked">
         <el-button @click="handleReset">
@@ -152,6 +160,7 @@
                   <el-select v-model="formData.menuKind" style="width: 100%">
                     <el-option label="0 - 菜单" value="0" />
                     <el-option label="1 - 事件" value="1" />
+                    <el-option label="2 - 页签" value="2" />
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -421,16 +430,104 @@
     :cust-no="globalCustNo" 
     :channel-no="formData.menuScope"
   />
+
+  <!-- 产品功能加挂详情弹窗 -->
+  <el-dialog
+    v-model="featureMountDialogVisible"
+    title="产品功能加挂情况查询"
+    width="720px"
+    append-to-body
+  >
+    <div v-loading="featureMountLoading" style="padding: 4px 0;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <el-alert
+          :title="`当前菜单 [${formData?.menuCode}] - ${formData?.menuName} 共被加挂到了 ${featureMountList.length} 个产品功能下。`"
+          :type="featureMountList.length > 0 ? 'success' : 'info'"
+          show-icon
+          :closable="false"
+          style="flex: 1; margin-right: 12px;"
+        />
+        <el-button type="primary" size="small" @click="handleOpenAddMount">
+          <el-icon><Plus /></el-icon> 新增加挂
+        </el-button>
+      </div>
+      <el-table :data="featureMountList" border stripe size="small" style="width: 100%" max-height="380">
+        <el-table-column prop="prodCode" label="产品编号" width="110" />
+        <el-table-column prop="prodName" label="产品名称" min-width="140" />
+        <el-table-column prop="featureId" label="功能ID" width="110" />
+        <el-table-column prop="featureName" label="功能名称" min-width="140" />
+        <el-table-column label="操作" width="80" align="center">
+          <template #default="{ row }">
+            <el-button type="danger" link size="small" @click="handleDeleteMount(row)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button type="primary" @click="featureMountDialogVisible = false">关闭</el-button>
+      </span>
+    </template>
+  </el-dialog>
+
+  <!-- 新增加挂产品功能选择弹窗 -->
+  <el-dialog
+    v-model="addMountDialogVisible"
+    title="选择产品功能新增加挂"
+    width="720px"
+    append-to-body
+  >
+    <div style="margin-bottom: 12px; display: flex; gap: 10px;">
+      <el-input
+        v-model="addMountKeyword"
+        placeholder="根据产品名称或功能名称模糊匹配..."
+        clearable
+        :prefix-icon="Search"
+        @input="loadProdFeatures"
+        style="flex: 1;"
+      />
+      <el-button type="primary" @click="loadProdFeatures">查询</el-button>
+    </div>
+    <el-table
+      :data="prodFeatureList"
+      border
+      stripe
+      size="small"
+      style="width: 100%"
+      max-height="400"
+      v-loading="addMountLoading"
+      highlight-current-row
+      @current-change="handleSelectProdFeature"
+    >
+      <el-table-column width="50" align="center">
+        <template #default="{ row }">
+          <el-radio :model-value="selectedProdFeature === row" :label="true">&nbsp;</el-radio>
+        </template>
+      </el-table-column>
+      <el-table-column prop="prodCode" label="产品编号" width="110" />
+      <el-table-column prop="prodName" label="产品名称" min-width="140" />
+      <el-table-column prop="featureId" label="功能ID" width="110" />
+      <el-table-column prop="featureName" label="功能名称" min-width="140" />
+    </el-table>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="addMountDialogVisible = false">取消</el-button>
+        <el-button type="primary" :disabled="!selectedProdFeature" :loading="addMountSubmitting" @click="handleConfirmAddMount">确认加挂</el-button>
+      </span>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
 import {
   EditPen, RefreshLeft, Check, Document, Setting,
-  Connection, Lock, User, Link, More, Pointer
+  Connection, Lock, User, Link, More, Pointer, Plus, Search, Delete
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { updateMenu, updateMenuCode } from '../api/menu.js'
+import { updateMenu, updateMenuCode, getFeatureMounts, getProdFeatures, addFeatureMount, deleteFeatureMount } from '../api/menu.js'
 import { checkJnlSuccess } from '../api/jnl.js'
 import JnlHistoryDialog from './JnlHistoryDialog.vue'
 
@@ -479,6 +576,19 @@ const interfaceTrCodes = ref([])
 const checkingAll = ref(false)
 const hasCheckedAll = ref(false)
 const successInterfacesCount = ref(0)
+
+// 产品功能加挂查询相关状态
+const featureMountDialogVisible = ref(false)
+const featureMountLoading = ref(false)
+const featureMountList = ref([])
+
+// 新增加挂弹窗相关状态
+const addMountDialogVisible = ref(false)
+const addMountLoading = ref(false)
+const addMountSubmitting = ref(false)
+const addMountKeyword = ref('')
+const prodFeatureList = ref([])
+const selectedProdFeature = ref(null)
 
 // 递归收集子接口及 trCode
 function collectInterfaces(node, trCodes) {
@@ -616,6 +726,154 @@ async function checkAllInterfaces() {
   } finally {
     checkingAll.value = false
   }
+}
+
+/**
+ * 查询指定菜单被加挂的产品与功能列表
+ */
+async function handleCheckMounts() {
+  if (!formData.value || !formData.value.menuCode) {
+    ElMessage.warning('请先选择或保存菜单')
+    return
+  }
+  featureMountDialogVisible.value = true
+  featureMountLoading.value = true
+  featureMountList.value = []
+  try {
+    const tenantId = formData.value.tenantId || '047'
+    const res = await getFeatureMounts(formData.value.menuScope, formData.value.menuCode, tenantId)
+    if (res && res.code === 200) {
+      featureMountList.value = res.data || []
+    } else {
+      ElMessage.error(res?.message || '查询产品功能加挂失败')
+    }
+  } catch (err) {
+    console.error('查询产品功能加挂异常:', err)
+    ElMessage.error('查询产品功能加挂异常')
+  } finally {
+    featureMountLoading.value = false
+  }
+}
+
+/**
+ * 打开新增加挂弹窗
+ */
+function handleOpenAddMount() {
+  addMountDialogVisible.value = true
+  addMountKeyword.value = ''
+  selectedProdFeature.value = null
+  loadProdFeatures()
+}
+
+/**
+ * 加载产品功能列表
+ */
+async function loadProdFeatures() {
+  addMountLoading.value = true
+  try {
+    const tenantId = formData.value.tenantId || '047'
+    const res = await getProdFeatures(tenantId, addMountKeyword.value)
+    if (res && res.code === 200) {
+      prodFeatureList.value = res.data || []
+    } else {
+      ElMessage.error(res?.message || '获取产品功能列表失败')
+      prodFeatureList.value = []
+    }
+  } catch (err) {
+    console.error('加载产品功能异常:', err)
+    ElMessage.error('加载产品功能列表异常')
+  } finally {
+    addMountLoading.value = false
+  }
+}
+
+/**
+ * 选中产品功能行
+ */
+function handleSelectProdFeature(val) {
+  selectedProdFeature.value = val
+}
+
+/**
+ * 确认新增加挂
+ */
+async function handleConfirmAddMount() {
+  if (!selectedProdFeature.value) {
+    ElMessage.warning('请选择需要加挂的产品功能')
+    return
+  }
+  // 前端校验：如果已在列表中则报错
+  const isMounted = featureMountList.value.some(
+    item => item.prodCode === selectedProdFeature.value.prodCode && item.featureId === selectedProdFeature.value.featureId
+  )
+  if (isMounted) {
+    ElMessage.error('该菜单已被加挂到此产品及功能下，不能重复加挂')
+    return
+  }
+
+  addMountSubmitting.value = true
+  try {
+    const tenantId = formData.value.tenantId || '047'
+    const reqData = {
+      tenantId: tenantId,
+      stat: '1',
+      prodCode: selectedProdFeature.value.prodCode,
+      featureId: selectedProdFeature.value.featureId,
+      menuScope: formData.value.menuScope,
+      menuCode: formData.value.menuCode,
+      menuName: formData.value.menuName
+    }
+    const res = await addFeatureMount(reqData)
+    if (res && res.code === 200) {
+      ElMessage.success('新增加挂成功')
+      addMountDialogVisible.value = false
+      handleCheckMounts()
+      emit('refresh')
+    } else {
+      ElMessage.error(res?.message || '新增加挂失败')
+    }
+  } catch (err) {
+    console.error('新增加挂异常:', err)
+    ElMessage.error(err?.response?.data?.message || '新增加挂异常')
+  } finally {
+    addMountSubmitting.value = false
+  }
+}
+
+/**
+ * 删除加挂关系
+ */
+function handleDeleteMount(row) {
+  ElMessageBox.confirm(
+    `确认要将该菜单从产品 [${row.prodName || row.prodCode}] 的功能 [${row.featureName || row.featureId}] 下移除加挂吗？`,
+    '提示',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(async () => {
+    try {
+      const tenantId = formData.value.tenantId || '047'
+      const res = await deleteFeatureMount(
+        formData.value.menuScope,
+        formData.value.menuCode,
+        row.prodCode,
+        row.featureId,
+        tenantId
+      )
+      if (res && res.code === 200) {
+        ElMessage.success('删除加挂关系成功')
+        handleCheckMounts()
+        emit('refresh')
+      } else {
+        ElMessage.error(res?.message || '删除加挂关系失败')
+      }
+    } catch (err) {
+      console.error('删除加挂关系异常:', err)
+      ElMessage.error('删除加挂关系异常')
+    }
+  }).catch(() => {})
 }
 
 /**

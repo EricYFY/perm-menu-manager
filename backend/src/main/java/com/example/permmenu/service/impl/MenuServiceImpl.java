@@ -2,9 +2,14 @@ package com.example.permmenu.service.impl;
 
 import com.example.permmenu.dto.MenuCodeUpdateRequest;
 import com.example.permmenu.dto.MenuDragRequest;
+import com.example.permmenu.dto.MenuFeatureMountVO;
 import com.example.permmenu.dto.MenuTreeNode;
+import com.example.permmenu.dto.ProdFeatureVO;
+import com.example.permmenu.entity.PermFeatureMenu;
 import com.example.permmenu.entity.PermMenu;
+import com.example.permmenu.mapper.PermFeatureMenuMapper;
 import com.example.permmenu.mapper.PermMenuMapper;
+import com.example.permmenu.mapper.PermProdFeatureMapper;
 import com.example.permmenu.service.EditSessionService;
 import com.example.permmenu.service.MenuService;
 import com.example.permmenu.util.TableMetaUtil;
@@ -25,6 +30,8 @@ import java.util.stream.Collectors;
 public class MenuServiceImpl implements MenuService {
 
     private final PermMenuMapper permMenuMapper;
+    private final PermFeatureMenuMapper permFeatureMenuMapper;
+    private final PermProdFeatureMapper permProdFeatureMapper;
     // 使用 Lazy 避免循环依赖（如有）
     @Lazy
     private final EditSessionService editSessionService;
@@ -40,8 +47,21 @@ public class MenuServiceImpl implements MenuService {
 
         List<PermMenu> menuList = permMenuMapper.selectByScope(menuScope, tenantId, tableName, subsystemCode);
 
+        Set<String> mountedMenuCodes;
+        try {
+            List<String> codes = permFeatureMenuMapper.selectMountedMenuCodes(menuScope, tenantId);
+            mountedMenuCodes = (codes != null) ? new HashSet<>(codes) : Collections.emptySet();
+        } catch (Exception e) {
+            mountedMenuCodes = Collections.emptySet();
+        }
+
+        final Set<String> mountedSet = mountedMenuCodes;
         List<MenuTreeNode> nodeList = menuList.stream()
-                .map(this::convertToTreeNode)
+                .map(menu -> {
+                    MenuTreeNode node = convertToTreeNode(menu);
+                    node.setIsMounted(mountedSet.contains(menu.getMenuCode()));
+                    return node;
+                })
                 .collect(Collectors.toList());
 
         Map<String, MenuTreeNode> nodeMap = new LinkedHashMap<>();
@@ -184,6 +204,10 @@ public class MenuServiceImpl implements MenuService {
         String menuScope = request.getMenuScope();
         String tenantId = request.getTenantId();
 
+        if (menuCode != null && menuCode.equals(newUppMenuCode)) {
+            throw new RuntimeException("不能将菜单拖拽到自身之下");
+        }
+
         PermMenu menu = permMenuMapper.selectByKey(menuCode, menuScope, tenantId, tableName);
         if (menu == null) {
             throw new RuntimeException("菜单不存在：" + menuCode);
@@ -195,6 +219,8 @@ public class MenuServiceImpl implements MenuService {
         } else if (newUppMenuCode == null || newUppMenuCode.trim().isEmpty()) {
             newLevel = 1;
         } else {
+            checkNotDescendant(menuCode, newUppMenuCode, menuScope, tenantId, tableName);
+
             PermMenu parentMenu = permMenuMapper.selectByKey(newUppMenuCode, menuScope, tenantId, tableName);
             if (parentMenu == null) {
                 throw new RuntimeException("目标父菜单不存在：" + newUppMenuCode);
@@ -214,7 +240,26 @@ public class MenuServiceImpl implements MenuService {
         permMenuMapper.updateByKey(menu, tableName);
 
         if (levelDiff != 0) {
-            updateChildrenLevel(menuCode, menuScope, tenantId, levelDiff, tableName);
+            updateChildrenLevel(menuCode, menuScope, tenantId, levelDiff, tableName, new HashSet<>());
+        }
+    }
+
+    private void checkNotDescendant(String currentCode, String targetUppCode, String menuScope, String tenantId,
+            String tableName) {
+        String curr = targetUppCode;
+        Set<String> visited = new HashSet<>();
+        while (curr != null && !curr.trim().isEmpty()) {
+            if (curr.equals(currentCode)) {
+                throw new RuntimeException("不能将菜单拖拽到自己的子孙节点之下");
+            }
+            if (!visited.add(curr)) {
+                break;
+            }
+            PermMenu p = permMenuMapper.selectByKey(curr, menuScope, tenantId, tableName);
+            if (p == null) {
+                break;
+            }
+            curr = p.getUppMenuCode();
         }
     }
 
@@ -250,7 +295,10 @@ public class MenuServiceImpl implements MenuService {
     }
 
     private void updateChildrenLevel(String parentCode, String menuScope,
-            String tenantId, long levelDiff, String tableName) {
+            String tenantId, long levelDiff, String tableName, Set<String> visited) {
+        if (!visited.add(parentCode)) {
+            return;
+        }
         List<PermMenu> children = permMenuMapper.selectChildren(parentCode, menuScope, tenantId, tableName);
         for (PermMenu child : children) {
             if (child.getMenuLevel() == 9) {
@@ -263,7 +311,7 @@ public class MenuServiceImpl implements MenuService {
             }
 
             permMenuMapper.updateByKey(child, tableName);
-            updateChildrenLevel(child.getMenuCode(), menuScope, tenantId, levelDiff, tableName);
+            updateChildrenLevel(child.getMenuCode(), menuScope, tenantId, levelDiff, tableName, visited);
         }
     }
 
@@ -484,5 +532,59 @@ public class MenuServiceImpl implements MenuService {
         return String.format(
                 "UPDATE %s SET UPP_MENU_CODE = %s WHERE UPP_MENU_CODE = %s AND MENU_SCOPE = %s AND TENANT_ID = %s;",
                 tableName, escape(newCode), escape(oldCode), escape(menuScope), escape(tenantId));
+    }
+
+    @Override
+    public List<MenuFeatureMountVO> getFeatureMounts(String menuScope, String menuCode, String tenantId) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = "047";
+        }
+        try {
+            return permFeatureMenuMapper.selectFeatureMountsByMenu(menuScope, menuCode, tenantId);
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public List<ProdFeatureVO> getProdFeatures(String tenantId, String keyword) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = "047";
+        }
+        try {
+            return permProdFeatureMapper.selectProdFeatures(tenantId, keyword);
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addFeatureMount(PermFeatureMenu request) {
+        if (request.getTenantId() == null || request.getTenantId().isEmpty()) {
+            request.setTenantId("047");
+        }
+        if (request.getStat() == null || request.getStat().isEmpty()) {
+            request.setStat("1");
+        }
+        int existCount = permFeatureMenuMapper.checkExistFeatureMenu(
+                request.getMenuScope(),
+                request.getMenuCode(),
+                request.getProdCode(),
+                request.getFeatureId(),
+                request.getTenantId());
+        if (existCount > 0) {
+            throw new RuntimeException("该菜单已经加挂到该产品功能，请勿重复加挂");
+        }
+        permFeatureMenuMapper.insertFeatureMenu(request);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteFeatureMount(String menuScope, String menuCode, String prodCode, String featureId, String tenantId) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = "047";
+        }
+        permFeatureMenuMapper.deleteFeatureMenu(menuScope, menuCode, prodCode, featureId, tenantId);
     }
 }

@@ -76,7 +76,7 @@ public class ComDictController {
      * @param dict 字典实体
      * @return 操作结果
      */
-    @PutMapping
+    @PostMapping("/update")
     public ResultVO<Void> updateDictEntry(@RequestBody ComDict dict) {
         try {
             comDictService.updateDictEntry(dict);
@@ -94,7 +94,7 @@ public class ComDictController {
      * @param tenantId 租户号，默认 047
      * @return 操作结果
      */
-    @DeleteMapping("/{dictId}/{dictKey}")
+    @PostMapping("/delete/{dictId}/{dictKey}")
     public ResultVO<Void> deleteDictEntry(
             @PathVariable String dictId,
             @PathVariable String dictKey,
@@ -114,7 +114,7 @@ public class ComDictController {
      * @param tenantId 租户号，默认 047
      * @return 操作结果
      */
-    @DeleteMapping("/{dictId}")
+    @PostMapping("/delete/{dictId}")
     public ResultVO<Void> deleteDictGroup(
             @PathVariable String dictId,
             @RequestParam(defaultValue = "047") String tenantId) {

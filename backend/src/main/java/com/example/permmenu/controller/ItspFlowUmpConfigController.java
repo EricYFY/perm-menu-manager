@@ -48,12 +48,12 @@ public class ItspFlowUmpConfigController {
         return ResultVO.success(itspFlowUmpConfigService.save(itspFlowUmpConfig));
     }
 
-    @PutMapping
+    @PostMapping("/update")
     public ResultVO<Boolean> update(@RequestBody ItspFlowUmpConfig itspFlowUmpConfig) {
         return ResultVO.success(itspFlowUmpConfigService.updateById(itspFlowUmpConfig));
     }
 
-    @DeleteMapping("/{id}")
+    @PostMapping("/delete/{id}")
     public ResultVO<Boolean> delete(@PathVariable String id) {
         return ResultVO.success(itspFlowUmpConfigService.removeById(id));
     }

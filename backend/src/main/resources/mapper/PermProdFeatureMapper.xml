@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.permmenu.mapper.PermProdFeatureMapper">
+
+    <select id="selectProdFeatures" resultType="com.example.permmenu.dto.ProdFeatureVO">
+        SELECT 
+            pf.TENANT_ID AS tenantId,
+            pf.PROD_CODE AS prodCode,
+            p.PROD_NAME AS prodName,
+            pf.FEATURE_ID AS featureId,
+            pf.FEATURE_NAME AS featureName,
+            pf.JOB_KINDS AS jobKinds
+        FROM perm_prod_feature pf
+        LEFT JOIN perm_prod p ON pf.PROD_CODE = p.PROD_CODE AND pf.TENANT_ID = p.TENANT_ID
+        WHERE pf.TENANT_ID = #{tenantId}
+        <if test="keyword != null and keyword != ''">
+            AND (p.PROD_NAME LIKE CONCAT('%', #{keyword}, '%') OR pf.FEATURE_NAME LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY pf.PROD_CODE, pf.FEATURE_ID
+    </select>
+
+</mapper>

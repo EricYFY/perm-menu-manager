@@ -2,7 +2,10 @@ package com.example.permmenu.service;
 
 import com.example.permmenu.dto.MenuCodeUpdateRequest;
 import com.example.permmenu.dto.MenuDragRequest;
+import com.example.permmenu.dto.MenuFeatureMountVO;
 import com.example.permmenu.dto.MenuTreeNode;
+import com.example.permmenu.dto.ProdFeatureVO;
+import com.example.permmenu.entity.PermFeatureMenu;
 import com.example.permmenu.entity.PermMenu;
 
 import java.util.List;
@@ -64,4 +67,35 @@ public interface MenuService {
      * @param tableName 表名
      */
     void deleteMenu(String menuCode, String menuScope, String tenantId, String tableName);
+
+    /**
+     * 查询指定菜单被加挂的产品与功能列表
+     *
+     * @param menuScope 菜单渠道
+     * @param menuCode  菜单编码
+     * @param tenantId  租户号
+     * @return 加挂的产品功能 VO 列表
+     */
+    List<MenuFeatureMountVO> getFeatureMounts(String menuScope, String menuCode, String tenantId);
+
+    /**
+     * 查询产品功能列表（支持模糊匹配）
+     *
+     * @param tenantId 租户号
+     * @param keyword  关键词
+     * @return 产品功能列表
+     */
+    List<ProdFeatureVO> getProdFeatures(String tenantId, String keyword);
+
+    /**
+     * 新增菜单功能加挂
+     *
+     * @param request 加挂请求对象
+     */
+    void addFeatureMount(PermFeatureMenu request);
+
+    /**
+     * 删除菜单功能加挂
+     */
+    void deleteFeatureMount(String menuScope, String menuCode, String prodCode, String featureId, String tenantId);
 }

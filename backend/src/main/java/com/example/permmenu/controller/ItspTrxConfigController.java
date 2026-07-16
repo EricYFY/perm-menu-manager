@@ -30,13 +30,13 @@ public class ItspTrxConfigController {
         return ResultVO.success();
     }
 
-    @PutMapping
+    @PostMapping("/update")
     public ResultVO<Void> update(@RequestBody ItspTrxConfig config) {
         itspTrxConfigService.updateConfig(config);
         return ResultVO.success();
     }
 
-    @DeleteMapping("/{trCode}/{language}")
+    @PostMapping("/delete/{trCode}/{language}")
     public ResultVO<Void> delete(@PathVariable String trCode, @PathVariable String language) {
         itspTrxConfigService.deleteConfig(trCode, language);
         return ResultVO.success();

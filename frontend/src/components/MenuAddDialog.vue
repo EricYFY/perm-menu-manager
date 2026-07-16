@@ -74,6 +74,7 @@
             <el-select v-model="formData.menuKind" style="width: 100%">
               <el-option label="0 - 菜单" value="0" />
               <el-option label="1 - 事件" value="1" />
+              <el-option label="2 - 页签" value="2" />
             </el-select>
           </el-form-item>
         </el-col>

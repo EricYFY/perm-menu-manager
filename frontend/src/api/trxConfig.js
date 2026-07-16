@@ -44,12 +44,12 @@ export function addTrxConfig(config) {
  * 更新配置
  */
 export function updateTrxConfig(config) {
-  return request.put('/trx-config', config)
+  return request.post('/trx-config/update', config)
 }
 
 /**
  * 删除配置
  */
 export function deleteTrxConfig(trCode, language) {
-  return request.delete(`/trx-config/${trCode}/${language}`)
+  return request.post(`/trx-config/delete/${trCode}/${language}`)
 }

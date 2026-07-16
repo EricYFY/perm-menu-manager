@@ -93,12 +93,12 @@ public class ItspFunPermissionController {
         return ResultVO.success(itspFunPermissionService.saveBatch(list));
     }
 
-    @PutMapping
+    @PostMapping("/update")
     public ResultVO<Boolean> update(@RequestBody ItspFunPermission itspFunPermission) {
         return ResultVO.success(itspFunPermissionService.updateById(itspFunPermission));
     }
 
-    @DeleteMapping("/{id}")
+    @PostMapping("/delete/{id}")
     public ResultVO<Boolean> delete(@PathVariable String id) {
         return ResultVO.success(itspFunPermissionService.removeById(id));
     }

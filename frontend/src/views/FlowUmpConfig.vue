@@ -283,7 +283,7 @@ const handleDelete = (row) => {
     type: 'warning'
   }).then(async () => {
     try {
-      const res = await axios.delete(`${API_BASE}/${row.cfgId}`)
+      const res = await axios.post(`${API_BASE}/delete/${row.cfgId}`)
       if (res.data.code === 200) {
         ElMessage.success('删除成功')
         fetchData()
@@ -301,8 +301,8 @@ const submitForm = async () => {
   await formRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        const method = formData.cfgId ? 'put' : 'post'
-        const res = await axios[method](API_BASE, formData)
+        const url = formData.cfgId ? `${API_BASE}/update` : API_BASE
+        const res = await axios.post(url, formData)
         if (res.data.code === 200) {
           ElMessage.success('保存成功')
           dialogVisible.value = false

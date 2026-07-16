@@ -61,7 +61,7 @@ export function addMenu(data, tempTableName = '') {
  * @param {string} tempTableName - 临时表名
  */
 export function updateMenu(data, tempTableName = '') {
-  return request.put('/menu', data, {
+  return request.post('/menu/update', data, {
     headers: tempTableName ? { 'X-Temp-Table': tempTableName } : {}
   })
 }
@@ -72,7 +72,7 @@ export function updateMenu(data, tempTableName = '') {
  * @param {string} tempTableName - 临时表名
  */
 export function updateMenuCode(data, tempTableName = '') {
-  return request.put('/menu/code', data, {
+  return request.post('/menu/code', data, {
     headers: tempTableName ? { 'X-Temp-Table': tempTableName } : {}
   })
 }
@@ -83,7 +83,7 @@ export function updateMenuCode(data, tempTableName = '') {
  * @param {string} tempTableName - 临时表名
  */
 export function dragMenu(data, tempTableName = '') {
-  return request.put('/menu/drag', data, {
+  return request.post('/menu/drag', data, {
     headers: tempTableName ? { 'X-Temp-Table': tempTableName } : {}
   })
 }
@@ -96,8 +96,56 @@ export function dragMenu(data, tempTableName = '') {
  * @param {string} tempTableName - 临时表名
  */
 export function deleteMenu(menuScope, menuCode, tenantId = '047', tempTableName = '') {
-  return request.delete(`/menu/${menuScope}/${menuCode}`, {
-    params: { tenantId },
+  return request.post(`/menu/delete/${menuScope}/${menuCode}?tenantId=${tenantId}`, {}, {
     headers: tempTableName ? { 'X-Temp-Table': tempTableName } : {}
+  })
+}
+
+/**
+ * 查询指定菜单被加挂的产品与功能列表
+ * @param {string} menuScope - 菜单渠道
+ * @param {string} menuCode - 菜单编码
+ * @param {string} tenantId - 租户号
+ */
+export function getFeatureMounts(menuScope, menuCode, tenantId = '047') {
+  return request({
+    url: '/menu/feature-mounts',
+    method: 'get',
+    params: { menuScope, menuCode, tenantId }
+  })
+}
+
+/**
+ * 查询产品功能列表（支持模糊匹配）
+ * @param {string} tenantId - 租户号
+ * @param {string} keyword - 关键词
+ */
+export function getProdFeatures(tenantId = '047', keyword = '') {
+  return request({
+    url: '/menu/prod-features',
+    method: 'get',
+    params: { tenantId, keyword }
+  })
+}
+
+/**
+ * 新增菜单功能加挂
+ * @param {object} data - 加挂记录实体
+ */
+export function addFeatureMount(data) {
+  return request.post('/menu/feature-mount/add', data)
+}
+
+/**
+ * 删除菜单功能加挂
+ * @param {string} menuScope - 菜单渠道
+ * @param {string} menuCode - 菜单编码
+ * @param {string} prodCode - 产品编号
+ * @param {string} featureId - 功能ID
+ * @param {string} tenantId - 租户号
+ */
+export function deleteFeatureMount(menuScope, menuCode, prodCode, featureId, tenantId = '047') {
+  return request.post('/menu/feature-mount/delete', {}, {
+    params: { menuScope, menuCode, prodCode, featureId, tenantId }
   })
 }

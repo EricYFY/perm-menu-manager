@@ -26,6 +26,25 @@
       </el-button-group>
     </div>
 
+    <!-- 筛选面板 -->
+    <div class="tree-filter-panel" style="margin: 8px 0; padding: 10px 12px; background: var(--bg-color-light); border-radius: 6px; border: 1px solid var(--border-color-light);">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 13px; color: var(--text-regular); font-weight: 500;">显示:</span>
+          <el-radio-group v-model="displayFilter" size="small" @change="handleFilter">
+            <el-radio-button label="all">全部</el-radio-button>
+            <el-radio-button label="display">显示</el-radio-button>
+            <el-radio-button label="hidden">不显示</el-radio-button>
+          </el-radio-group>
+        </div>
+        <div>
+          <el-checkbox v-model="filterUnmountedOnly" size="small" @change="handleFilter">
+            <span style="font-size: 13px; color: var(--text-regular);">显示且未加挂到产品功能</span>
+          </el-checkbox>
+        </div>
+      </div>
+    </div>
+
     <!-- 树组件 -->
     <div
       class="tree-wrapper"
@@ -142,6 +161,8 @@ const treeRef = ref(null)
 const loading = ref(false)
 const treeData = ref([])
 const searchText = ref('')
+const displayFilter = ref('all') // 'all' | 'display' | 'hidden'
+const filterUnmountedOnly = ref(false)
 const expandedKeys = ref([])
 const addDialogVisible = ref(false)
 const addParentMenu = ref(null)
@@ -224,7 +245,11 @@ async function loadTree(keepState = false) {
  * 搜索过滤
  */
 function handleFilter() {
-  treeRef.value?.filter(searchText.value)
+  treeRef.value?.filter({
+    keyword: searchText.value,
+    display: displayFilter.value,
+    unmounted: filterUnmountedOnly.value
+  })
 }
 
 /**
@@ -316,12 +341,29 @@ function handleNodeDragEnd() {
  * 树节点过滤方法
  */
 function filterNode(value, data) {
-  if (!value) return true
-  const keyword = value.toLowerCase()
-  return (
-    data.menuCode.toLowerCase().includes(keyword) ||
-    data.menuName.toLowerCase().includes(keyword)
-  )
+  // 1. 关键词文本搜索过滤
+  if (searchText.value) {
+    const keyword = searchText.value.toLowerCase()
+    const matchSearch = (data.menuCode && data.menuCode.toLowerCase().includes(keyword)) ||
+                        (data.menuName && data.menuName.toLowerCase().includes(keyword))
+    if (!matchSearch) return false
+  }
+
+  // 2. 新增独立筛选项：显示且未加挂到产品功能下的菜单
+  if (filterUnmountedOnly.value) {
+    if (String(data.menuDisplay) !== '1' || data.isMounted) {
+      return false
+    }
+  } else {
+    // 3. 基础筛选选项：“显示、不显示、全部”
+    if (displayFilter.value === 'display') {
+      if (String(data.menuDisplay) !== '1') return false
+    } else if (displayFilter.value === 'hidden') {
+      if (String(data.menuDisplay) === '1') return false
+    }
+  }
+
+  return true
 }
 
 /**

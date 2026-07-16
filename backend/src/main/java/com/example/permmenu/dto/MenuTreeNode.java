@@ -127,6 +127,9 @@ public class MenuTreeNode {
     /** 描述 */
     private String description;
 
+    /** 是否已加挂到产品功能下 (perm_feature_menu 中是否存在记录) */
+    private Boolean isMounted;
+
     /** 子节点列表 */
     private List<MenuTreeNode> children = new ArrayList<>();
 }

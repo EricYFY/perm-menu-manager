@@ -52,7 +52,7 @@ export function addDictEntry(dict) {
  * @param {object} dict
  */
 export function updateDictEntry(dict) {
-  return request.put('/dict', dict)
+  return request.post('/dict/update', dict)
 }
 
 /**
@@ -62,7 +62,7 @@ export function updateDictEntry(dict) {
  * @param {string} tenantId
  */
 export function deleteDictEntry(dictId, dictKey, tenantId = '047') {
-  return request.delete(`/dict/${dictId}/${dictKey}`, { params: { tenantId } })
+  return request.post(`/dict/delete/${dictId}/${dictKey}`, null, { params: { tenantId } })
 }
 
 /**
@@ -71,5 +71,5 @@ export function deleteDictEntry(dictId, dictKey, tenantId = '047') {
  * @param {string} tenantId
  */
 export function deleteDictGroup(dictId, tenantId = '047') {
-  return request.delete(`/dict/${dictId}`, { params: { tenantId } })
+  return request.post(`/dict/delete/${dictId}`, null, { params: { tenantId } })
 }

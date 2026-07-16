@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.permmenu.mapper.PermFeatureMenuMapper">
+
+    <select id="selectMountedMenuCodes" resultType="java.lang.String">
+        SELECT DISTINCT MENU_CODE
+        FROM perm_feature_menu
+        WHERE MENU_SCOPE = #{menuScope}
+          AND TENANT_ID = #{tenantId}
+    </select>
+
+    <select id="selectFeatureMountsByMenu" resultType="com.example.permmenu.dto.MenuFeatureMountVO">
+        SELECT 
+            fm.TENANT_ID AS tenantId,
+            fm.MENU_SCOPE AS menuScope,
+            fm.MENU_CODE AS menuCode,
+            fm.MENU_NAME AS menuName,
+            fm.PROD_CODE AS prodCode,
+            p.PROD_NAME AS prodName,
+            fm.FEATURE_ID AS featureId,
+            pf.FEATURE_NAME AS featureName
+        FROM perm_feature_menu fm
+        LEFT JOIN perm_prod p ON fm.PROD_CODE = p.PROD_CODE AND fm.TENANT_ID = p.TENANT_ID
+        LEFT JOIN perm_prod_feature pf ON fm.FEATURE_ID = pf.FEATURE_ID AND fm.TENANT_ID = pf.TENANT_ID
+        WHERE fm.MENU_SCOPE = #{menuScope}
+          AND fm.MENU_CODE = #{menuCode}
+          AND fm.TENANT_ID = #{tenantId}
+    </select>
+
+    <select id="checkExistFeatureMenu" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM perm_feature_menu
+        WHERE MENU_SCOPE = #{menuScope}
+          AND MENU_CODE = #{menuCode}
+          AND PROD_CODE = #{prodCode}
+          AND FEATURE_ID = #{featureId}
+          AND TENANT_ID = #{tenantId}
+    </select>
+
+    <insert id="insertFeatureMenu" parameterType="com.example.permmenu.entity.PermFeatureMenu">
+        INSERT INTO perm_feature_menu (
+            TENANT_ID, STAT, PROD_CODE, FEATURE_ID, MENU_SCOPE, MENU_CODE, MENU_NAME, CRE_DATE, UPD_DATE
+        ) VALUES (
+            #{tenantId}, #{stat}, #{prodCode}, #{featureId}, #{menuScope}, #{menuCode}, #{menuName}, NOW(), NOW()
+        )
+    </insert>
+
+    <delete id="deleteFeatureMenu">
+        DELETE FROM perm_feature_menu
+        WHERE MENU_SCOPE = #{menuScope}
+          AND MENU_CODE = #{menuCode}
+          AND PROD_CODE = #{prodCode}
+          AND FEATURE_ID = #{featureId}
+          AND TENANT_ID = #{tenantId}
+    </delete>
+
+</mapper>
